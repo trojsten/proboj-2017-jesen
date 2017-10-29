@@ -13,55 +13,11 @@ bool je_policko(int vyska, int sirka, int riadok, int stlpec){
 
 
 masked_game_state::masked_game_state(game_state gs, int klient) {
-    eter = gs.eter[klient];
-    kolo = gs.round;
-    sirka = gs.width;
-    vyska = gs.height;
-    mapa.resize(vyska);
-
-    for (int i = 0; i < vyska; i++) {
-        mapa[i].resize(sirka);
-        for (int j = 0; j < sirka; j++) {
-            mapa[i][j] = gs.map[i][j];
-            mapa[i][j].majitel = (gs.map[i][j].majitel==klient)?
-                                    0
-                                :(
-                                    gs.map[i][j].majitel==0?
-                                        klient
-                                    :gs.map[i][j].majitel
-                                );
-        }
-    }
-    
-    for (int i = 0; i < vyska; i++) {
-        for (int j = 0; j < sirka; j++) {
-            if(mapa[i][j].majitel!=0){
-                bool vidi=0;
-                for (int v=0; v<=2; v++){
-                    for (int d=0; d<=v; d++){
-                        if(je_policko(vyska, sirka, i+(v-d), j+d) && mapa[i+(v-d)][j+d].majitel==0)vidi=1;
-                        if(je_policko(vyska, sirka, i-(v-d), j+d) && mapa[i-(v-d)][j+d].majitel==0)vidi=1;
-                        if(je_policko(vyska, sirka, i+(v-d), j-d) && mapa[i+(v-d)][j-d].majitel==0)vidi=1;
-                        if(je_policko(vyska, sirka, i-(v-d), j-d) && mapa[i-(v-d)][j-d].majitel==0)vidi=1;
-                    }
-                }
-            
-                if(!vidi){
-                    mapa[i][j].majitel = -1;
-                    mapa[i][j].sila_robota = -1;
-                }
-            }
-        }
-    }
-    
-    
     
 }
 
 game_state::game_state(int num_players, mapa gm) {
     if(num_players>gm.maxplayers) chyba("Toľko hráčov sa na túto mapu nezmestí je tu %d miest",gm.maxplayers);
-    eter.resize(num_players,0);
-    skore.resize(num_players,0);
     round = 0;
     width = gm.width;
     height = gm.height;

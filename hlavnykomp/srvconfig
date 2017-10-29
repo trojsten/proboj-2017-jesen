@@ -1,0 +1,17 @@
+klienti=( paulinia nulano korfix misko brutfors bujosakrmi konzulat nemozne jano )
+mapy=( mapy/*.ppm )
+nazvy=(
+
+  'toolate'
+  'nemozne'
+  'konzulat'
+  'Bujosakrmi'
+  'brutfors'
+  'misko'
+  'korfix'
+  'Nulano'
+  'paulinia'
+
+  
+  
+)

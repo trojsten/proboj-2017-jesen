@@ -3,21 +3,22 @@
 #define UTIL_H
 
 #include <string>
-#include <sstream>
+#include <sstream> //TODO načo je to tu?
 
 void inicializujSignaly (void (*cleanupFunkcia)()) ;
 
 #ifdef NELOGUJ
-#define loguj(...) (0)
+#define log(...) (0)
 #else
-void logheader () ;
+void logheader() ;
 #include <cstdio>
-#define loguj(...) (logheader(), fprintf(stderr, __VA_ARGS__), fprintf(stderr, "\n"))
+#define log(...) (logheader(), fprintf(stderr, __VA_ARGS__), fprintf(stderr, "\n"))
 #endif
 
-bool jeAdresar (std::string) ;
-bool jeSubor (std::string) ;
+bool jeAdresar(std::string) ;
+bool jeSubor(std::string) ;
 
 long long gettime () ;
+std::string itos(int i);
 
 #endif

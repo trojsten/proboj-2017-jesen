@@ -2,28 +2,26 @@
 #ifndef KLIENT_H
 #define KLIENT_H
 
+#include <vector>
+#include <string>
+
 #include "proces.h"
 
 class Klient {
-    private:
-        std::string uvodneData;
-        Proces proces;
-        std::string precitane;
-        long long poslRestart;
-
-    public:
-        std::string meno;
-        
-        Klient () ;
-        Klient (std::string _meno, std::string uvodneData, std::string adresar, std::string nazovExec, std::string logAdresar) ;
-        Klient (std::string _meno, std::string uvodneData, std::string adresar, std::string logAdresar) ;
-
-        std::string citaj (unsigned cap) ;
-        void posli (std::string data) ;
-        void restartuj () ;
-        void zabi () ;
-
-        bool zije () ;
+    
+  private:
+    std::string label;
+    Proces proces;
+    std::string uvodneData;
+    long long timeout;
+    int zostavaRestartov;
+  public:
+    Klient(std::string _label, std::string _uvodneData, std::string adresar, std::string logAdresar);
+    std::string komunikuj(std::string request);
+    void vypniTimeout();
+    void restartuj();
+    void zabi();
+    static std::vector<std::string> komunikujNaraz(std::vector<Klient*> klienti, std::vector<std::string> requesty);
 };
 
 #endif

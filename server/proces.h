@@ -7,25 +7,26 @@
 
 class Proces {
     private:
-        std::vector<std::string> args;
+        std::vector<std::string> command;
         std::string cwd;
         std::string errfile;
         int pid;
         int writefd;
         int readfd;
 
-    public:
-        Proces () ;
+public:
+    Proces() : cwd("."), pid(-1) { };
+    void setProperties(std::vector<std::string> _command, std::string _cwd, std::string _errfile) {
+      zabi();
+      command = _command;
+      cwd = _cwd;
+      errfile = _errfile;
+    }
 
-        int getPid () ;
-        void write (std::string data) ;
-        std::string read (unsigned cap) ;
-        void zabi () ;
-        void restartuj () ;
-
-        void setProperties (std::vector<std::string> _args, std::string _cwd, std::string _errfile) ;
-
-        bool zije () ;
+    void write(std::string data);
+    std::string nonblockRead();
+    void zabi();
+    void restartuj();
 };
 
 #endif

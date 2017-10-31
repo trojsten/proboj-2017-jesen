@@ -1,160 +1,195 @@
+
 #ifndef COMMON_H
 #define COMMON_H
 
+// vseobecne datove struktury a tak podobne
+
 #include <vector>
-#include <map>
 
-#include "marshal.h"
+#define FOREACH(it,c) for (typeof((c).begin()) it = (c).begin(); it != (c).end(); ++it)
 
-using namespace std;
 
-const int MAX_POCET_KOL = 1000;
-
-enum smer {
-    VLAVO, VPRAVO, HORE, DOLE, TU
-};
-
-enum prikaz {
-    POSUN, POSTAV
-};
-
-//VODA a LAB_SPAWN sú len pre interné potreby, klient ich nevidí 
-enum typ_stvorca {
-    TRAVA, KAMEN, VODA, LAB, MESTO, LAB_SPAWN
-};
+#define PRIKAZ_BUDUJ 1
+#define PRIKAZ_BURAJ 2
+#define PRIKAZ_AKTIVUJ 3
+#define PRIKAZ_UTOC 4
 
 struct Prikaz {
-    prikaz pr;
-    int riadok;
-    int stlpec;
-    int instrukcia; //smer alebo sila robota, podla prikazu
-};
-
-struct stvorec {
-    int majitel = -1;
-    int sila_robota = 0;
-};
-
-struct mapa {
-    int width, height, maxplayers;
-    vector<vector<typ_stvorca>> squares;
-    
-    mapa(){}
-    
-    mapa(int width, int height);
-    //interné funkcie
-    bool load (string filename);
-    void zamaskuj(bool voda);
-};
-
-//tento struct je interný, ten pod ním je zaujímavý
-struct game_state {
-    int round;
-    int width, height;
-    vector<int> eter;
-    vector<int> skore;
-    vector<vector<stvorec> > map;
-
-    game_state() {}
-    game_state(int num_players, mapa gm);
-};
-
-struct masked_game_state {
-    int kolo;
-    int vyska, sirka;
-    int eter;
-    vector<vector<stvorec> > mapa;
-    masked_game_state(){}
-    masked_game_state(game_state gs, int klient);
-};
-
-//dalej su interné štruktúry, asi vám nepomôžu, ale kľudne si ich pozrite
-struct instruction {
-    int klient_id;
-    prikaz pr;
-    int riadok;
-    int stlpec;
-    union{
-        int sila;
-        smer sm;
-    };
-    
-    bool operator<(const instruction A) const {
-        return  (klient_id < A.klient_id) ? 
-                    (1)
-                : 
-                    (
-                        (klient_id == A.klient_id) ? 
-                            (
-                                (pr<A.pr) ? 
-                                    (1) 
-                                : 
-                                    (
-                                        (pr == A.pr) ? 
-                                            (
-                                                (riadok<A.riadok) ?
-                                                        (1)
-                                                    :
-                                                        (
-                                                            (riadok==A.riadok) ?
-                                                                (stlpec<A.stlpec)
-                                                            :(0)
-                                                        )
-                                            ):(0)
-                                    )
-                            ):(0)
-                    );
-    }
+  int typ;
+  int x;   // vyznam x,y,a,b zavisi od typu, vid staticke funkcie nizsie
+  int y;
+  int a;
+  int b;
+  static Prikaz buduj(int x, int y, int typ) {
+    return (Prikaz){ PRIKAZ_BUDUJ, x, y, typ, -1 };
+  }
+  static Prikaz buraj(int x, int y) {
+    return (Prikaz){ PRIKAZ_BURAJ, x, y, -1, -1 };
+  }
+  static Prikaz aktivuj(int x, int y, int destx, int desty) {
+    return (Prikaz){ PRIKAZ_AKTIVUJ, x, y, destx, desty };
+  }
+  static Prikaz utoc(int typ, int hrac) {
+    return (Prikaz){ PRIKAZ_UTOC, -1, -1, typ, hrac };
+  }
 };
 
 
+typedef std::vector<Prikaz> Odpoved;
 
-#endif
 
-// tieto udaje pouziva marshal.cpp aby vedel ako tie struktury ukladat a nacitavat (je to magicke makro)
+#define VEZA_LASER    0
+#define VEZA_POSTREK  1
+#define VEZA_LUPA     2
+#define VEZA_CARY     3
+#define VEZA_SIPY     4
+#define VEZA_LIENKY   5
+#define VEZA_PLACACKA 6
 
-#ifdef reflectenum
+#define VEZA_ZBERAC    7
+#define VEZA_NASAVAC   8
+#define VEZA_MOTIVATOR 9
 
-reflectenum(smer)
-reflectenum(prikaz)
-reflectenum(typ_stvorca)
+#define VEZA_LAB_VOSKA    10
+#define VEZA_LAB_MUCHA    11
+#define VEZA_LAB_HUSENICA 12
+#define VEZA_LAB_SLIMAK   13
+#define VEZA_LAB_MEDVED   14
+
+#define VEZA_POCET_BOJOVYCH 7
+#define VEZA_LAB_PRVY 10
+#define VEZA_POCET_TYPOV 15
+
+struct Veza {
+  int x;
+  int y;
+  int typ;
+  int energia;
+  int baseLevel;
+  std::vector<int> levelBonusy;   // pre kazdy bonus ze kolko kol plati
+  int terazTahala;
+
+  int getLevel() const { return baseLevel + levelBonusy.size(); }
+};
+
+
+#define UTOCNIK_VOSKA    0
+#define UTOCNIK_MUCHA    1
+#define UTOCNIK_HUSENICA 2
+#define UTOCNIK_SLIMAK   3
+#define UTOCNIK_MEDVED   4
+
+#define UTOCNIK_POCET_TYPOV 5
+
+struct Utocnik {
+  int x;
+  int y;
+  int typ;
+  int hp;
+  int ktorehoHraca;
+  int level;
+
+  int pohybovyTimer;
+  int kolkoSpomaleny;
+};
+
+
+struct Hrac {
+  int body;
+  int drevo;
+  int umrel;
+  std::vector<Veza> veze;
+  std::vector<Utocnik> utocnici;
+  std::vector<Utocnik> prichadzajuci;   // klienti nevidia
+  std::vector<int> mapovanie;   // klienti nevidia
+};
+
+
+struct Stav {
+  std::vector<Hrac> hraci;
+  int cas;
+};
+
+
+#define MAPA_VODA    0
+#define MAPA_POZEMOK 1
+#define MAPA_CESTA   2
+#define MAPA_CIEL    3
+#define MAPA_SPAWN   4
+
+struct Mapa {
+  int pocetHracov;
+  int w;
+  int h;
+  std::vector<std::vector<int> > pole;
+  std::vector<std::vector<int> > loziska;
+
+  int zisti(int x, int y) const {
+    return (x >= 0 && x < w && y >= 0 && y < h ? pole[y][x] : MAPA_VODA);
+  }
+  bool priechodne(int x, int y) const {
+    int m = zisti(x, y);
+    return m == MAPA_CESTA || m == MAPA_CIEL || m == MAPA_SPAWN;
+  }
+};
+
+#define FORMAT_VERSION 2
 
 #endif
 
 #ifdef reflection
+// tieto udaje pouziva marshal.cpp aby vedel ako tie struktury ukladat a nacitavat
 
-reflection(Prikaz)
-    member(pr)
-    member(riadok)
-    member(stlpec)
-    member(instrukcia)
-end()
+reflection(Prikaz);
+  member(typ);
+  member(x);
+  member(y);
+  member(a);
+  member(b);
+end();
 
-reflection(stvorec)
-    member(majitel)
-    member(sila_robota)
-end()
+reflection(Veza);
+  member(x);
+  member(y);
+  member(typ);
+  member(energia);
+  member(baseLevel);
+  member(levelBonusy);
+  member(terazTahala);
+end();
 
-reflection(mapa)
-    member(height)
-    member(width)
-    member(squares)
-end()
+reflection(Utocnik);
+  member(x);
+  member(y);
+  member(typ);
+  member(hp);
+  member(ktorehoHraca);
+  member(level);
+  member(pohybovyTimer);
+  member(kolkoSpomaleny);
+end();
 
-reflection(game_state)
-    member(round)
-    member(height)
-    member(width)
-    member(eter)
-    member(skore)
-    member(map)
-end()
+reflection(Hrac);
+  member(body);
+  member(drevo);
+  member(umrel);
+  member(veze);
+  member(utocnici);
+  member(prichadzajuci);
+  member(mapovanie);
+end();
 
-reflection(masked_game_state)
-    member(kolo)
-    member(vyska)
-    member(sirka)
-    member(eter)
-    member(mapa)
-end()
+reflection(Stav);
+  member(hraci);
+  member(cas);
+end();
+
+reflection(Mapa);
+  member(pocetHracov);
+  member(w);
+  member(h);
+  member(pole);
+  member(loziska);
+end();
+
 #endif

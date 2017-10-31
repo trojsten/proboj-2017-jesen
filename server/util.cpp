@@ -33,8 +33,13 @@ static void shutdownHandler (int signum) {
 }
 
 static void sigchldHandler (int signum) {
+    // handler na reapovanie zombie procesov:
+    // jednoduchsie by bolo pouzit SA_NOCLDWAIT, ale potom system() nedokaze
+    // zistit exit codes. handlovat SIGCHLD je OK, lebo system() pocas svojho
+    // behu SIGCHLD blokuje, takze sa nestane, ze by sme exitcode odchytili
+    // odtialto pred tym, ako sa k nemu dostane on, apod.
     int pid, status;
-    while ((pid = waitpid(-1, &status, WNOHANG)), (pid > 0)) {
+    while ((pid = waitpid(-1, &status, WNOHANG)), (pid > 0)) { // WTF konštrukcia by Mišo Š.
         if (WIFSIGNALED(status)) {
             fprintf(stderr, "proces %d umrel na: %s\n", pid, strsignal(WTERMSIG(status)) );
         }
@@ -80,3 +85,11 @@ long long gettime () {
   gettimeofday(&tim, NULL);
   return tim.tv_sec*1000LL + tim.tv_usec/1000LL;
 }
+
+
+string itos(int i) {
+  stringstream ss;
+  ss << i;
+  return ss.str();
+}
+

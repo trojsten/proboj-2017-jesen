@@ -1,4 +1,6 @@
-# proboj-2017-jar - Mad Scientists
+# proboj-2017-jesen Tower defense-offense
+
+Nieje vo funkčnom stave
 
 ## Co treba na rozbehanie proboja?
 

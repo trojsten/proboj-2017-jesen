@@ -37,9 +37,9 @@ typedef std::vector<Prikaz> Odpoved;
 enum TypBudovy{
     TROLL, //sedí pri ceste, mláti kyjakom. Proti zombie
     HYDRA, //chomp, môže aj na viac strán. Loví zajace
-    DRAK, //chrlí oheň na všetko, ale má cooldown?
-    TEMNY_CARODEJNIK, //čaruje vždy iba na jedného
-    LASER_RAPTOR,  //
+    DRAK,  //chrlí oheň na všetko, ale má cooldown?
+    TEMNY_CARODEJNIK, //čaruje
+    LASER_RAPTOR,  // 
 
     LAB_ZAJAC,
     LAB_ZOMBIE,
@@ -56,11 +56,7 @@ struct Veza {
   int y;
   int typ;
   int energia;      //TODO
-//  int baseLevel;
-//  std::vector<int> levelBonusy;   // pre kazdy bonus ze kolko kol plati
   int terazTahala; //aby nemohol burat v kole ked striela
-
-//  int getLevel() const { return baseLevel + levelBonusy.size(); }
 };
 
 enum TypUtocnika{
@@ -75,23 +71,20 @@ enum TypUtocnika{
 struct Utocnik {
   int x;
   int y;
-  int typ;
+  TypUtocnika typ;
   int hp;
   int ktorehoHraca;
-//  int level;
-
-  int pohybovyTimer;
-//  int kolkoSpomaleny;
+  int pohybovyTimer; //kolko tahov bude este na danom policku
 };
 
 
 struct Hrac {
   int body;
   int energia;
-  int umrel;
+  int umrel;   //TODO int? nie nahodou bool?
   std::vector<Veza> veze;
   std::vector<Utocnik> utocnici;        //už v hracom poli
-  std::vector<Utocnik> prichadzajuci;   // klienti nevidia  //maju zautocit TODO načo je to tu? asi to robí nejakú ochranu na spawne ---zrušiť
+  std::vector<Utocnik> prichadzajuci;   // klienti nevidia  //este len maju zautocita su na spawne TODO načo je to tu?
   std::vector<int> mapovanie;   // klienti nevidia   //zrušiť, slúžilo na náhodné prečíslovanie protihráčov pri maskovaní stavu, načo keď oni sú náhodne vybratí? treba to aby klient mal číslo 0
 };
 
@@ -113,11 +106,10 @@ struct Mapa {
   int pocetHracov;
   int w;
   int h;
-  std::vector<std::vector<int> > pole;
- // std::vector<std::vector<int> > loziska; //taka zbytocnost
+  std::vector<std::vector<Teren> > pole;
 
-  Teren zisti(int x, int y) const {                                     //TODO načo je tam to const, je to zbitocne wtf
-    return (x >= 0 && x < w && y >= 0 && y < h ? (Teren)pole[y][x] : VODA);
+  Teren zisti(int x, int y) const {
+    return (x >= 0 && x < w && y >= 0 && y < h ? pole[y][x] : VODA);
   }
   bool priechodne(int x, int y) const {
     int m = zisti(x, y);
@@ -130,6 +122,9 @@ struct Mapa {
 
 #ifdef reflectenum
 reflectenum(TypPrikazu);
+reflectenum(TypBudovy);
+reflectenum(TypUtocnika);
+reflectenum(Teren);
 #endif
 
 #ifdef reflection

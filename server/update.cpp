@@ -134,7 +134,7 @@ int zistiCenuVeze(const Stav& stav, int hrac, int typ) {
 }
 
 
-void vysliUtocnika(Stav& stav, int odKoho, int komu, int typ) {
+void vysliUtocnika(Stav& stav, int odKoho, int komu, TypUtocnika typ) {
   OBSERVE("vysliUtocnikov", odKoho, komu, typ);
     Utocnik u;
     u.x = u.y = -1;
@@ -196,7 +196,8 @@ bool vykonajPrikaz(const Mapa& mapa, Stav& stav, int hrac, const Prikaz& p) {
     }
 
     case UTOC: {
-      int typ = p.a, ciel = p.b;
+      TypUtocnika typ = (TypUtocnika)p.a;
+      int ciel = p.b;
       if (typ < 0 || typ >= UTOCNIK_POCET_TYPOV) return false;
       if (ciel <= 0 || ciel >= mapa.pocetHracov) return false;  //na seba neutocime
       //if (h.energia < kUtokCena[typ]) return false;

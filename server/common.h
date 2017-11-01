@@ -47,9 +47,9 @@ enum TypBudovy{
     LAB_JEDNOROZEC
 };
 
-#define VEZA_POCET_BOJOVYCH 7
-#define VEZA_LAB_PRVY 10
-#define VEZA_POCET_TYPOV 15
+#define VEZA_POCET_BOJOVYCH 5
+#define VEZA_LAB_PRVY 6
+#define VEZA_POCET_TYPOV 9
 
 struct Veza {
   int x;

@@ -11,58 +11,66 @@ using namespace std;
 #include "update.h"
 
 
-mapa m;
-masked_game_state stav;   // vzdy som hrac cislo 0
+Mapa mapa;
+Stav stav;   // vzdy som hrac cislo 0
+vector<Prikaz> prikazy;
+
+int akoBudemUtocit;
+
+
+// pomocna funkcia. volajte zo zistiTah(), napr.:
+// if (!vykonaj(Prikaz::stavaj(10, 10, VEZA_LASER))) { /* zeby malo dreva? */ }
+bool vykonaj(const Prikaz& p) {
+  bool uspech = vykonajPrikaz(mapa, stav, 0, p);
+  if (uspech) prikazy.push_back(p);   // potom to posleme serveru
+  return uspech;
+}
 
 
 // main() zavola tuto funkciu, ked nacita mapu
 void inicializuj() {
-  // (sem patri vas kod)
+  srand(time(NULL) * getpid());
+  akoBudemUtocit = rand() % UTOCNIK_POCET_TYPOV;
 }
 
 
-// main() zavola tuto funkciu, ked nacita novy stav hry, a ocakava instrukcie
-// tato funkcia ma vratit vector prikazov
-vector<Prikaz> zistiTah() {
-    vector<Prikaz> instrukcie;
-    for(int i=0; i<stav.vyska; i++)
-        for(int j=0; j<stav.sirka; j++){
-            if (stav.mapa[i][j].majitel==0 && stav.mapa[i][j].sila_robota>0){
-                Prikaz p;
-                p.pr = POSUN;
-                p.riadok = i;
-                p.stlpec = j;
-                p.instrukcia = rand()%4;
-                instrukcie.push_back(p);
-            }
-            if (stav.mapa[i][j].majitel==0 && m.squares[i][j]==LAB && stav.mapa[i][j].sila_robota==0){
-                Prikaz p;
-                p.pr = POSTAV;
-                p.riadok = i;
-                p.stlpec = j;
-                p.instrukcia = rand()%(stav.eter+1);
-                stav.eter -= p.instrukcia;
-                instrukcie.push_back(p);
-            }
-        }
-    return instrukcie;
+int pocetVezi(int typ) {
+  int result = 0;
+  FOREACH(it, stav.hraci[0].veze) if (it->typ == typ) result++;
+  return result;
+}
+
+
+// main() zavola tuto funkciu, ked chce vediet, ake prikazy chceme vykonat
+void zistiTah() {
+  int mojLab = VEZA_LAB_PRVY + akoBudemUtocit;
+  cerr<<"nieco\n";
+  while (pocetVezi(mojLab) < 1) {
+    if (!vykonaj(Prikaz::buduj(rand() % mapa.w, rand() % mapa.h, mojLab))) break;
+  }
+  while (true) {
+    int naKoho = 1 + rand() % (mapa.pocetHracov-1);
+    if (!vykonaj(Prikaz::utoc(akoBudemUtocit, naKoho))) break;
+  }
+  uloz(cerr, prikazy);
+  // hmm este nejaku obranu by to chcelo...
 }
 
 
 int main() {
   // v tejto funkcii su vseobecne veci, nemusite ju menit (ale mozte).
 
-  unsigned int seed = time(NULL) * getpid();
-  srand(seed);
-  nacitaj(cin, m);
-  fprintf(stderr, "START pid=%d, seed=%u\n", getpid(), seed);
+  nacitaj(cin, mapa);
   inicializuj();
 
   while (cin.good()) {
     nacitaj(cin, stav);
-    cerr<<"---"<<endl;
-    uloz(cout, zistiTah());
+    prikazy.clear();
+    zistiTah();
+    uloz(cout, prikazy);
+    cout << ".\n" << flush;   // bodka a flush = koniec odpovede
   }
 
   return 0;
 }
+

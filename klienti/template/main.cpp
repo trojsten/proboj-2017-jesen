@@ -14,7 +14,7 @@ vector<Prikaz> prikazy;
 
 
 // pomocna funkcia. volajte zo zistiTah(), napr.:
-// if (!vykonaj(Prikaz::stavaj(10, 10, VEZA_LASER))) { /* zeby malo dreva? */ }
+// if (!vykonaj(Prikaz::stavaj(10, 10, DRAK))) { /* zeby malo energie? */ }
 bool vykonaj(const Prikaz& p) {
   bool uspech = vykonajPrikaz(mapa, stav, 0, p);
   if (uspech) prikazy.push_back(p);   // potom to posleme serveru

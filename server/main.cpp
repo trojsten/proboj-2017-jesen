@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
 
     odsimulujKolo(mapa, stav, odpovede);
     //TODO graphstream
-    uloz(logstream, odpovede);
+    //uloz(logstream, odpovede);
     uloz(logstream, stav);
     logstream << flush;
     observationstream << flush;

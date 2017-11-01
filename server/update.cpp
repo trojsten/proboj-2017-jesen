@@ -40,16 +40,15 @@ const int kUtocnikRychlost[UTOCNIK_POCET_TYPOV] = { 55, 80, 50, 25, 45 };
 const int kUtokCena[UTOCNIK_POCET_TYPOV] = { 99, 96, 99, 99, 98 };
 
 // TODO kalibrovat! TODO nastaviť od oka
-const int kVezaCena0[VEZA_POCET_TYPOV] = { 159, 133, 147, 196, 141, 155, 128,   60, 42, 54,   72, 80, 61, 86, 75 };
-const int kVezaCena1[VEZA_POCET_TYPOV] = { 10, 17, 7, 10, 5, 2, 4,   0, 11, 9,   0, 0, 0, 0, 0 };
-const int kVezaCena2[VEZA_POCET_TYPOV] = { 0, 0, 0, 0, 0, 0, 0,   10, 0, 0,   0, 0, 0, 0, 0 };
+const int kVezaCena0[VEZA_POCET_TYPOV] = { 159, 133, 147, 196, 141,   72, 80, 61, 86 };
+const int kVezaCena1[VEZA_POCET_TYPOV] = { 10, 17, 7, 10, 5,   0, 0, 0, 0 };
+const int kVezaCena2[VEZA_POCET_TYPOV] = { 0, 0, 0, 0, 0,    0, 0, 0, 0 };
 
 const int kDamage[UTOCNIK_POCET_TYPOV][VEZA_POCET_BOJOVYCH] = {  //násobiteľ damage nepáči sa mi
-  { 2, 1, 1, 1, 2, 4, 2 },
-  { 2, 1, 4, 0, 1, 2, 4 },
-  { 4, 2, 1, 4, 1, 2, 0 },
-  { 1, 4, 2, 1, 1, 0, 1 },
-  { 1, 1, 1, 4, 4, 1, 2 },
+  { 2, 1, 1, 1, 2, },
+  { 2, 1, 4, 0, 1, },
+  { 4, 2, 1, 4, 1, },
+  { 1, 4, 2, 1, 1, },
 };
 
 

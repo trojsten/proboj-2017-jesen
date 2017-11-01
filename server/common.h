@@ -56,7 +56,7 @@ struct Veza {
   int x;
   int y;
   int typ;
-  //int energia;      //TODO vlastne nic
+  //int energia;      //TODO nejaký cooldown pre laby
   int terazTahala; //aby nemohol burat v kole ked striela TODO mozno zrusim
 };
 //konstanty (rychlost a hp) este niesu

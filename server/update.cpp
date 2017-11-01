@@ -20,14 +20,12 @@ const int kVyhernaVzdialenost = 10;
 const int kVyherneBodyZaklad = 50;
 const int kVyherneBodyNasobokP = 2500;
 const int kVydrzoveBody = 1;
-const int kPeriodaPrirodnychUtokov = 60;
 const int kVezaDamageBase = 35;
 const int kVezaDamageRandom = 35;
 
-const int kUvodneDrevo = 360;
+const int kUvodnaEnergia = 360;
 const int kPrisunDreva = 1;
 const int kPrisunDrevaZaklad = 4;
-const int kNaboj = 1000;
 
 const int kNasavacRange = 10;
 const int kTrvanieLevelBonusu = 8;
@@ -35,22 +33,18 @@ const int kCaryChcuNaboj = 50;
 const int kLienkyChcuNaboj = 70;
 const int kLienkyKolkoSpomaluju = 5;
 
-const int kUtocnikHp0[UTOCNIK_POCET_TYPOV] = { 100, 30, 80, 130, 400 };
+const int kUtocnikHp[UTOCNIK_POCET_TYPOV] = { 100, 30, 80, 130, 400 };
 const int kUtocnikHp1[UTOCNIK_POCET_TYPOV] = { 11, 3, 12, 20, 50 };
 const int kUtocnikRychlost[UTOCNIK_POCET_TYPOV] = { 55, 80, 50, 25, 45 };
 
 const int kUtokCena[UTOCNIK_POCET_TYPOV] = { 99, 96, 99, 99, 98 };
-const int kUtokPocet0P[UTOCNIK_POCET_TYPOV] = { 1100, 3000, 900, 500, 260 };
-const int kUtokPocet1P[UTOCNIK_POCET_TYPOV] = { 30, 200, 50, 36, 11 };
-const int kUtokRozostupy[UTOCNIK_POCET_TYPOV] = { 80, 30, 110, 90, 250 };
 
-// TODO kalibrovat!
+// TODO kalibrovat! TODO nastaviť od oka
 const int kVezaCena0[VEZA_POCET_TYPOV] = { 159, 133, 147, 196, 141, 155, 128,   60, 42, 54,   72, 80, 61, 86, 75 };
 const int kVezaCena1[VEZA_POCET_TYPOV] = { 10, 17, 7, 10, 5, 2, 4,   0, 11, 9,   0, 0, 0, 0, 0 };
 const int kVezaCena2[VEZA_POCET_TYPOV] = { 0, 0, 0, 0, 0, 0, 0,   10, 0, 0,   0, 0, 0, 0, 0 };
-const bool kVezaMaNaboj[VEZA_POCET_TYPOV] = { 0,0,1,1,0,1,0, 0,1,1, 0,0,0,0,0 };
 
-const int kOdolnost[UTOCNIK_POCET_TYPOV][VEZA_POCET_BOJOVYCH] = {
+const int kDamage[UTOCNIK_POCET_TYPOV][VEZA_POCET_BOJOVYCH] = {  //násobiteľ damage nepáči sa mi
   { 2, 1, 1, 1, 2, 4, 2 },
   { 2, 1, 4, 0, 1, 2, 4 },
   { 4, 2, 1, 4, 1, 2, 0 },
@@ -62,6 +56,8 @@ const int kOdolnost[UTOCNIK_POCET_TYPOV][VEZA_POCET_BOJOVYCH] = {
 static ostream* g_observation;
 void zapniObservation(ostream* observation) { g_observation = observation; }
 
+
+//este viac agicke makro by Tomi
 #define OBSERVE(s,...) do {                                                    \
     if (!g_observation) break;                                                 \
     *g_observation << (s);                                                     \
@@ -72,36 +68,38 @@ void zapniObservation(ostream* observation) { g_observation = observation; }
   } while(0)
 
 
-Stav zaciatokHry(const Mapa& mapa) {
+Stav zaciatokHry(const Mapa& mapa, int hracov) {
   Stav stav;
   stav.cas = 0;
   stav.hraci.clear();
-  stav.hraci.resize(mapa.pocetHracov);
-  for (int i = 0; i < mapa.pocetHracov; i++) {
+  stav.hraci.resize(hracov);
+  for (int i = 0; i < hracov; i++) {
     Hrac& h = stav.hraci[i];
 
-    h.drevo = kUvodneDrevo;
+    h.energia = kUvodnaEnergia;
 
     // zoberieme nahodnu permutaciu, kde mapovanie[i] == 0
+    // netreba nahodnu, iba vymenime i a 0
     h.mapovanie.resize(mapa.pocetHracov);
     for (int j = 0; j < mapa.pocetHracov; j++) h.mapovanie[j] = j;
-    random_shuffle(h.mapovanie.begin() + 1, h.mapovanie.end());
+    //random_shuffle(h.mapovanie.begin() + 1, h.mapovanie.end());
     swap(h.mapovanie[0], h.mapovanie[i]);
   }
   return stav;
 }
 
-
+//vyráta každému políčku cesty vzdialenost od ciela (na indexe y * mapa.w + x)
 static void spravBfs(const Mapa& mapa, vector<int>& dist) {
   dist.clear();
   dist.resize(mapa.w * mapa.h, mapa.w * mapa.h * 2);
   queue<int> Q;
-  for (int y = 0; y < mapa.h; y++) for (int x = 0; x < mapa.w; x++) {
-    if (mapa.zisti(x, y) == MAPA_CIEL) {
-      Q.push(y * mapa.w + x);
-      dist[y * mapa.w + x] = 0;
-    }
-  }
+  for (int y = 0; y < mapa.h; y++) 
+        for (int x = 0; x < mapa.w; x++) {
+            if (mapa.zisti(x, y) == CIEL) {
+                Q.push(y * mapa.w + x);
+                dist[y * mapa.w + x] = 0;
+            }
+        }
   while (!Q.empty()) {
     int p = Q.front(); Q.pop();
     int y = p / mapa.w, x = p % mapa.w;
@@ -116,19 +114,19 @@ static void spravBfs(const Mapa& mapa, vector<int>& dist) {
   }
 }
 
-
+//TODO bolo na nejaké veci s levelmi
 int vzdialenost(int x1, int y1, int x2, int y2) {
   x1 -= x2; y1 -= y2;
   return x1*x1 + y1*y1;
 }
 
-
+//na hladanie možných obetí pre vežu
 template<class T> unsigned najdiXy(const vector<T>& v, int x, int y) {
   for (unsigned i = 0; i < v.size(); i++) if (v[i].x == x && v[i].y == y) return i;
   return v.size();
 }
 
-
+//TODO zmeniť nech to nejde cez 3 konštanty
 int zistiCenuVeze(const Stav& stav, int hrac, int typ) {
   int pocet = 0;
   FOREACH(it, stav.hraci[hrac].veze) if (it->typ == typ) pocet++;
@@ -136,61 +134,26 @@ int zistiCenuVeze(const Stav& stav, int hrac, int typ) {
 }
 
 
-void vysliUtocnikov(Stav& stav, int odKoho, int komu, int typ, int level) {
-  OBSERVE("vysliUtocnikov", odKoho, komu, typ, level);
-  int pocetSkupin = (kUtokPocet0P[typ] + level * kUtokPocet1P[typ]) / 100;
-  for (int i = 0; i < pocetSkupin; i++) {
+void vysliUtocnika(Stav& stav, int odKoho, int komu, int typ) {
+  OBSERVE("vysliUtocnikov", odKoho, komu, typ);
     Utocnik u;
     u.x = u.y = -1;
     u.typ = typ;
-    u.hp = kUtocnikHp0[typ] + level * kUtocnikHp1[typ];
+    u.hp = kUtocnikHp[typ];
     u.ktorehoHraca = odKoho;
-    u.level = level;
-    u.pohybovyTimer = kZdrzanieUtoku + i * kUtokRozostupy[typ];
-    u.kolkoSpomaleny = 0;
-    OBSERVE("insert.prichadzajuci", komu, (int)stav.hraci[komu].prichadzajuci.size());
-    stav.hraci[komu].prichadzajuci.push_back(u);
-  }
+    u.pohybovyTimer = kUtocnikRychlost[typ];
+    stav.hraci[komu].prichadzajuci.push_back(u); //TODO nech to nehadze do prichadzajuci ale do utocnici
 }
 
 
-void vezaZautoc(const Mapa& mapa, Stav& stav, int hrac, int veza, int utocnik, int special) {
+void vezaZautoc(const Mapa& mapa, Stav& stav, int hrac, int veza, int utocnik) {
   Hrac& h = stav.hraci[hrac];
   Veza& v = h.veze[veza];
   Utocnik& u = h.utocnici[utocnik];
 
   int damage = 0;
-  for (int i = 0; i < v.getLevel(); i++) {
-    if (special == -1) {
-      damage += kVezaDamageBase + rand() % kVezaDamageRandom;
-    }
-    else {
-      // veci, co sa deju aj na klientovi, musia byt deterministicke
-      damage += kVezaDamageBase + kVezaDamageRandom / 2;
-    }
-  }
-  damage *= kOdolnost[u.typ][v.typ];
-  if (v.typ == VEZA_CARY) {
-    if (v.energia >= kCaryChcuNaboj) {
-      v.energia -= kCaryChcuNaboj;
-    }
-    else {
-      damage = damage * 3 / 4;
-    }
-  }
-  if (v.typ == VEZA_LIENKY) {
-    if (v.energia >= kLienkyChcuNaboj) {
-      v.energia -= kLienkyChcuNaboj;
-      u.kolkoSpomaleny = max(u.kolkoSpomaleny, kLienkyKolkoSpomaluju);
-      OBSERVE("vezaZautoc.spomal", hrac, v.x, v.y, utocnik);
-    }
-  }
-  if (v.typ == VEZA_LUPA && special > 0) {
-    damage = damage * 3 / 2 / special;
-  }
-  else if (v.typ == VEZA_LUPA) {
-    damage = damage * 2 / 3;
-  }
+  damage += kDamage[v.typ][u.typ] + rand() % kVezaDamageRandom;
+  
 
   OBSERVE("vezaZautoc", hrac, v.x, v.y, utocnik, damage);
   u.hp -= damage;
@@ -205,142 +168,69 @@ void vezaZautoc(const Mapa& mapa, Stav& stav, int hrac, int veza, int utocnik, i
 bool vykonajPrikaz(const Mapa& mapa, Stav& stav, int hrac, const Prikaz& p) {
   Hrac& h = stav.hraci[hrac];
   switch (p.typ) {
-    case PRIKAZ_BUDUJ: {
+    case BUDUJ: {
       int typ = p.a;
-      if (typ < 0 || typ >= VEZA_POCET_TYPOV) return false;
-      if (najdiXy(h.veze, p.x, p.y) != h.veze.size()) return false;
-      if (mapa.zisti(p.x, p.y) != MAPA_POZEMOK) return false;
+      if (typ < 0 || typ >= VEZA_POCET_TYPOV) return false;            //TODO nejake warningy
+      if (najdiXy(h.veze, p.x, p.y) != h.veze.size()) return false;  //policko nieje volne
+      if (mapa.zisti(p.x, p.y) != POZEMOK) return false;
       int cena = zistiCenuVeze(stav, hrac, typ);
-      if (h.drevo < cena) return false;
-      OBSERVE("vykonajPrikaz.buduj", hrac, p.x, p.y);
-      h.drevo -= cena;
+      if (h.energia < cena) return false;
+      OBSERVE("vykonajPrikaz.buduj", hrac, p.x, p.y, typ);
+      h.energia -= cena;
       Veza nova;
       nova.x = p.x;
       nova.y = p.y;
       nova.typ = typ;
-      nova.energia = 0;
-      nova.baseLevel = 1;
       nova.terazTahala = 1;
       h.veze.push_back(nova);
       return true;
     }
 
-    case PRIKAZ_BURAJ: {
+    case BURAJ: {
       unsigned i = najdiXy(h.veze, p.x, p.y);
-      if (i == h.veze.size()) return false;
+      if (i == h.veze.size()) return false;   //TODO warningy
       if (h.veze[i].terazTahala) return false;
-      int typ = h.veze[i].typ;
-      int cena = zistiCenuVeze(stav, hrac, typ) / kKoeficientCenyZburania;
-      if (h.drevo < cena) return false;
       OBSERVE("vykonajPrikaz.buraj", hrac, p.x, p.y);
-      h.drevo -= cena;
       ERASE(h.veze, h.veze[i]);
       return true;
     }
 
-    case PRIKAZ_AKTIVUJ: {
-      int i = -1;
-      FOREACH(it, h.veze) {
-        if (it->x == p.x && it->y == p.y) i = it - h.veze.begin();
-      }
-      if (i == -1) return false;
-      if (h.veze[i].terazTahala) return false;
-      if (h.veze[i].typ != VEZA_NASAVAC && h.veze[i].energia < kNaboj) return false;
-      switch (h.veze[i].typ) {
-        case VEZA_LUPA: {
-          if (vzdialenost(p.x, p.y, p.a, p.b) > h.veze[i].getLevel()) return false;
-          vector<int> blizki;
-          FOREACH(it, h.utocnici) {
-            if (abs(it->x - p.a) <= 1 && abs(it->x - p.b) <= 1) {
-              blizki.push_back(it - h.utocnici.begin());
-            }
-          }
-          OBSERVE("vykonajPrikaz.aktivuj.lupa", hrac, p.x, p.y, p.a, p.b);
-          FOREACH(it, blizki) {
-            vezaZautoc(mapa, stav, hrac, i, *it, blizki.size());
-          }
-          h.veze[i].terazTahala = 1;
-          return true;
-        }
-
-        case VEZA_NASAVAC: {
-          unsigned ciel = najdiXy(h.veze, p.a, p.b);
-          if (ciel == h.veze.size()) return false;
-          if (p.a == p.x && p.b == p.y) return false;
-          if (!kVezaMaNaboj[h.veze[ciel].typ]) return false;
-          if (vzdialenost(p.x, p.y, p.a, p.b) > kNasavacRange) return false;
-          OBSERVE("vykonajPrikaz.aktivuj.nasavac", hrac, p.x, p.y, p.a, p.b);
-          if (h.veze[i].energia >= kNaboj) {
-            h.veze[ciel].energia += kNaboj;
-            h.veze[i].energia -= kNaboj;
-          }
-          else {
-            h.veze[ciel].energia += h.veze[i].energia / 2;
-            h.veze[i].energia = 0;
-          }
-          h.veze[i].terazTahala = 1;
-          return true;
-        }
-
-        case VEZA_MOTIVATOR: {
-          unsigned ciel = najdiXy(h.veze, p.a, p.b);
-          if (ciel == h.veze.size()) return false;
-          if (p.a == p.x && p.b == p.y) return false;
-          if (vzdialenost(p.x, p.y, p.a, p.b) > kNasavacRange) return false;
-          h.veze[i].energia -= kNaboj;
-          h.veze[i].terazTahala = 1;
-          if (h.veze[i].getLevel() > 1) {
-            OBSERVE("vykonajPrikaz.aktivuj.motivator.trvaly", hrac, p.x, p.y, p.a, p.b);
-            h.veze[ciel].baseLevel++;
-            ERASE(h.veze, h.veze[i]);
-          }
-          else {
-            OBSERVE("vykonajPrikaz.aktivuj.motivator", hrac, p.x, p.y, p.a, p.b);
-            h.veze[ciel].levelBonusy.push_back(stav.cas + kTrvanieLevelBonusu);
-          }
-          return true;
-        }
-      }
-      return false;
-    }
-
-    case PRIKAZ_UTOC: {
+    case UTOC: {
       int typ = p.a, ciel = p.b;
       if (typ < 0 || typ >= UTOCNIK_POCET_TYPOV) return false;
-      if (ciel < 0 || ciel >= mapa.pocetHracov) return false;
-      if (h.drevo < kUtokCena[typ]) return false;
+      if (ciel <= 0 || ciel >= mapa.pocetHracov) return false;  //na seba neutocime
+      //if (h.energia < kUtokCena[typ]) return false;
       if (stav.hraci[ciel].umrel) return false;
+      int uz_poslal=0;
       FOREACH(ph, stav.hraci) {
         if (ph->umrel) continue;
-        FOREACH(pu, ph->utocnici) {
-          if (pu->typ == typ && pu->ktorehoHraca == hrac) return false;
-        }
+//         FOREACH(pu, ph->utocnici) {
+//           if (pu->typ == typ && pu->ktorehoHraca == hrac) return false;
+//         }
         FOREACH(pu, ph->prichadzajuci) {
-          if (pu->typ == typ && pu->ktorehoHraca == hrac) return false;
+          if (pu->typ == typ && pu->ktorehoHraca == hrac) uz_poslal++;
         }
       }
-      bool moze = 0;
-      int level = 1;
+      int moze = 0;
       FOREACH(it, h.veze) if (it->typ == VEZA_LAB_PRVY + typ) {
-        moze = 1;
-        if (it->getLevel() > 1) level++;
+        moze++;
       }
-      if (!moze) return false;
-      h.drevo -= kUtokCena[typ];
-      vysliUtocnikov(stav, hrac, ciel, typ, level);
+      if (moze<=uz_poslal) return false;
+//       h.drevo -= kUtokCena[typ];
+      vysliUtocnika(stav, hrac, ciel, typ);
       return true;
     }
   }
-  return false;
+  return false; //TODO warning
 }
 
 
 void odsimulujUtocnika(const Mapa& mapa, Stav& stav, const vector<int>& dist, int hrac, int utocnik) {
   Utocnik& u = stav.hraci[hrac].utocnici[utocnik];
 
-  u.pohybovyTimer -= kUtocnikRychlost[u.typ] * (u.kolkoSpomaleny ? 66 : 100) / 100;
-  while (u.pohybovyTimer < 0) {
-    u.pohybovyTimer += 100;
+  u.pohybovyTimer --;
+  if (u.pohybovyTimer < 0) {
+    u.pohybovyTimer = kUtocnikRychlost[u.typ];
 
     int best = dist[u.y*mapa.w + u.x];
     for (int d = 0; d < 4; d++) {
@@ -369,30 +259,30 @@ void odsimulujUtocnika(const Mapa& mapa, Stav& stav, const vector<int>& dist, in
 void odsimulujPrehru(const Mapa& mapa, Stav& stav, const vector<int>& dist, int hrac) {
   Hrac& h = stav.hraci[hrac];
   if (!h.umrel) {
-    vector<int> hlasy(mapa.pocetHracov, 0);
+    vector<int> hlasy(mapa.pocetHracov, 0); //kto ma zasluhy za prehru
     bool prehral = false;
     FOREACH(it, h.utocnici) {
-      if (mapa.zisti(it->x, it->y) == MAPA_CIEL) prehral = true;
-      if (dist[it->y*mapa.w+it->x] <= kVyhernaVzdialenost && it->ktorehoHraca != -1) {
+      if (mapa.zisti(it->x, it->y) == CIEL) prehral = true;
+      if (dist[it->y*mapa.w+it->x] <= kVyhernaVzdialenost && it->ktorehoHraca != -1) { //TODO naco je kVyhernaVzdialenost????
         hlasy[it->ktorehoHraca] += it->hp;
       }
     }
     if (!prehral) return;
 
-    int totalLevel = 0;
-    FOREACH(it, h.veze) totalLevel += it->getLevel();
+//     int totalLevel = 0;
+//     FOREACH(it, h.veze) totalLevel += it->getLevel();
     int best = *max_element(hlasy.begin(), hlasy.end());
     for (int i = 0; i < mapa.pocetHracov; i++) {
       if (i != hrac && hlasy[i] && hlasy[i] > best/2) {
-        OBSERVE("odsimulujPrehru", hrac, i, totalLevel);
-        stav.hraci[i].body += kVyherneBodyZaklad + kVyherneBodyNasobokP * totalLevel / 100;
+        OBSERVE("odsimulujPrehru", hrac, i);
+        stav.hraci[i].body += kVyherneBodyZaklad + kVyherneBodyNasobokP;// * totalLevel / 100;
       }
     }
     h.umrel = true;
   }
 
   FOREACH(it, h.utocnici) {
-    if (mapa.zisti(it->x, it->y) == MAPA_CIEL) {
+    if (mapa.zisti(it->x, it->y) == CIEL) {
       OBSERVE("odsimulujPrehru.vCieli", hrac, it - h.utocnici.begin());
       OBSERVE("erase.utocnici", hrac, it - h.utocnici.begin(), (int)h.utocnici.size() - 1);
       ERASE(h.utocnici, *it);
@@ -410,9 +300,9 @@ void odsimulujVezu(const Mapa& mapa, Stav& stav, const vector<int>& dist, int hr
     int best = -1, bestdist = -1;
     FOREACH(pu, h.utocnici) {
       // dostrel veze = level veze
-      if (vzdialenost(v.x, v.y, pu->x, pu->y) <= v.getLevel()) {
-        // mojdist == kolko zhruba tahov potrva, kym sa dostanem do ciela
-        int mojdist = ((dist[pu->y*mapa.w + pu->x] - 1) * 100 + pu->pohybovyTimer) / kUtocnikRychlost[pu->typ];
+      if (vzdialenost(v.x, v.y, pu->x, pu->y) <= 1) {
+        // mojdist == kolko tahov potrva, kym sa dostanem do ciela
+        int mojdist = ((dist[pu->y*mapa.w + pu->x] - 1) * kUtocnikRychlost[pu->typ] + pu->pohybovyTimer);
         if (best == -1 || mojdist < bestdist) {
           best = pu - h.utocnici.begin();
           bestdist = mojdist;
@@ -423,22 +313,12 @@ void odsimulujVezu(const Mapa& mapa, Stav& stav, const vector<int>& dist, int hr
       vezaZautoc(mapa, stav, hrac, veza, best);
     }
   }
-
-  if (v.typ == VEZA_ZBERAC) {
-    h.drevo += kPrisunDreva;
-  }
-
-  if (v.typ == VEZA_NASAVAC) {
-    int l = mapa.loziska[v.y][v.x];
-    if (v.getLevel() > 1) l++;
-    v.energia += 3*l*l*l;
-  }
 }
 
 
 void odsimulujKolo(const Mapa& mapa, Stav& stav, const vector<Odpoved>& akcie) {
   vector<int> dist;
-  spravBfs(mapa, dist);
+  spravBfs(mapa, dist);  //naco to robi kazde kolo?
 
   for (int i = 0; i < mapa.pocetHracov; i++) {
     FOREACH(it, akcie[i]) {
@@ -465,24 +345,18 @@ void odsimulujKolo(const Mapa& mapa, Stav& stav, const vector<Odpoved>& akcie) {
   FOREACH(ph, stav.hraci) {
     FOREACH(pv, ph->veze) {
       pv->terazTahala = 0;
-      vector<int> noveBonusy;
-      FOREACH(pb, pv->levelBonusy) (*pb)--;
-      pv->levelBonusy.erase(remove(pv->levelBonusy.begin(), pv->levelBonusy.end(), 0), pv->levelBonusy.end());
     }
 
-    FOREACH(pu, ph->utocnici) {
-      if (pu->kolkoSpomaleny) pu->kolkoSpomaleny--;
-    }
 
     FOREACH(pu, ph->prichadzajuci) {
-      pu->pohybovyTimer -= kUtocnikRychlost[pu->typ];
-      if (pu->pohybovyTimer >= 0) continue;
+      pu->pohybovyTimer--;
+      if (pu->pohybovyTimer >= 0) continue; //TODO rovno do utoku
       pu->pohybovyTimer += 100;
 
-      // spawnujeme prijdeneho ucastnika
+      // spawnujeme prijdeneho utocnika na nahodnom spawne
       vector<pair<int,int> > spawnPolia;
       for (int y = 0; y < mapa.h; y++) for (int x = 0; x < mapa.w; x++) {
-        if (mapa.zisti(x, y) == MAPA_SPAWN) spawnPolia.push_back(make_pair(x, y));
+        if (mapa.zisti(x, y) == SPAWN) spawnPolia.push_back(make_pair(x, y));
       }
       if (!spawnPolia.size()) return;
       pair<int,int> ktory = spawnPolia[rand() % spawnPolia.size()];
@@ -495,24 +369,24 @@ void odsimulujKolo(const Mapa& mapa, Stav& stav, const vector<Odpoved>& akcie) {
       --pu;
     }
 
-    ph->drevo += kPrisunDrevaZaklad;
-    if (!ph->umrel) ph->body += kVydrzoveBody;
+    ph->energia += kPrisunDrevaZaklad; //TODO zisk energie za vsetko
+    if (!ph->umrel) ph->body += kVydrzoveBody; //TODO body budeme ratat inak
   }
 
-  if (stav.cas && stav.cas % kPeriodaPrirodnychUtokov == 0) {
-    int typ = rand() % UTOCNIK_POCET_TYPOV;
-    int n = (stav.cas / kPeriodaPrirodnychUtokov);
-    int level = n * n + n - 1;
-    for (int i = 0; i < mapa.pocetHracov; i++) if (!stav.hraci[i].umrel) {
-      vysliUtocnikov(stav, -1, i, typ, level);
-    }
-  }
+//   if (stav.cas && stav.cas % kPeriodaPrirodnychUtokov == 0) {
+//     int typ = rand() % UTOCNIK_POCET_TYPOV;
+//     int n = (stav.cas / kPeriodaPrirodnychUtokov);
+//     int level = n * n + n - 1;
+//     for (int i = 0; i < mapa.pocetHracov; i++) if (!stav.hraci[i].umrel) {
+//       vysliUtocnikov(stav, -1, i, typ, level);
+//     }
+//   }
 
   OBSERVE("odsimulujKolo.koniec", stav.cas);
   stav.cas++;
 }
 
-
+//vela sa toho nemaskuje, len tolko, aby seba dostal ako 0
 Stav zamaskujStav(const Mapa& mapa, const Stav& stav, int hrac) {
   const vector<int>& mapovanie = stav.hraci[hrac].mapovanie;
 
@@ -524,7 +398,7 @@ Stav zamaskujStav(const Mapa& mapa, const Stav& stav, int hrac) {
     Hrac& h = novy.hraci[mapovanie[i]];
 
     FOREACH(it, h.utocnici) {
-      if (it->ktorehoHraca != -1) it->ktorehoHraca = mapovanie[it->ktorehoHraca];
+      it->ktorehoHraca = mapovanie[it->ktorehoHraca];
     }
 
     h.prichadzajuci.clear();
@@ -534,7 +408,7 @@ Stav zamaskujStav(const Mapa& mapa, const Stav& stav, int hrac) {
   return novy;
 }
 
-
+//funny funkcia na inverzne maskovanie
 static int indexHodnoty(const vector<int>& pole, int hodnota) {
   return find(pole.begin(), pole.end(), hodnota) - pole.begin();
 }
@@ -543,11 +417,11 @@ static int indexHodnoty(const vector<int>& pole, int hodnota) {
 void odmaskujOdpoved(const Mapa& mapa, const Stav& stav, int hrac, Odpoved& odpoved) {
   const Hrac& h = stav.hraci[hrac];
   FOREACH(it, odpoved) {
-    if (it->typ == PRIKAZ_UTOC) it->b = indexHodnoty(h.mapovanie, it->b);
+    if (it->typ == UTOC) it->b = indexHodnoty(h.mapovanie, it->b);
   }
 }
 
-
+//pouziva sa to niekde?
 vector<int> ktoriZiju(const Mapa& mapa, const Stav& stav) {
   vector<int> result;
   FOREACH(it, stav.hraci) {

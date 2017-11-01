@@ -72,20 +72,20 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "daj mi novy prazdny zaznamovy adresar, v tomto uz nieco je.\n");
     return 1;
   }
+  
+  //uloží mapu v internom formáte do záznamu
   stringstream mapabuf;
   uloz(mapabuf, mapa);
   ofstream mapastream((zaznamovyAdresar+"/map").c_str());
   mapastream << mapabuf.str();
   mapastream.close();
+  
   checkOstream(mapastream, zaznamovyAdresar+"/map");
 
+  //logstream má odpovede klientov a stavy hry, observationstream má konkrétne veci čo sa má vykresliť
   ofstream logstream((zaznamovyAdresar+"/log").c_str());
   checkOstream(logstream, zaznamovyAdresar+"/log");
 
-  ofstream formatstream((zaznamovyAdresar+"/format").c_str());
-  checkOstream(formatstream, zaznamovyAdresar+"/format");
-  formatstream << FORMAT_VERSION;
-  formatstream.close();
 
   for (unsigned i = 0; i < klientskeAdresare.size(); i++) {
     klienti.push_back(Klient(itos(i), mapabuf.str(),
@@ -98,12 +98,13 @@ int main(int argc, char *argv[]) {
     log("NO_TIMEOUTS - davam klientom neobmedzeny cas na odpoved");
     for (unsigned i = 0; i < klienti.size(); i++) klienti[i].vypniTimeout();
   }
-
+ 
+  //observation sa zapisuje pri update stavu
   ofstream observationstream((zaznamovyAdresar+"/observation").c_str());
   checkOstream(observationstream, zaznamovyAdresar+"/observation");
   zapniObservation(&observationstream);
 
-  Stav stav = zaciatokHry(mapa);
+  Stav stav = zaciatokHry(mapa, klienti.size());
   uloz(logstream, stav);
 
   while (!hraSkoncila(mapa, stav)) {
@@ -119,7 +120,8 @@ int main(int argc, char *argv[]) {
     }
     vector<string> strOdpovede = Klient::komunikujNaraz(pZijuci, requesty);
     vector<Odpoved> odpovede(klienti.size());
-
+    
+    //máme nové odpovede od klientov, skúsime ich parsovat (odpoved je vector prikazov)
     for (unsigned z = 0; z < zijuci.size(); z++) {
       int i = zijuci[z];
       stringstream responsebuf(strOdpovede[z]);
@@ -134,7 +136,7 @@ int main(int argc, char *argv[]) {
     }
 
     odsimulujKolo(mapa, stav, odpovede);
-
+    //TODO graphstream
     uloz(logstream, odpovede);
     uloz(logstream, stav);
     logstream << flush;

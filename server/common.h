@@ -8,53 +8,44 @@
 
 #define FOREACH(it,c) for (typeof((c).begin()) it = (c).begin(); it != (c).end(); ++it)
 
-
-#define PRIKAZ_BUDUJ 1
-#define PRIKAZ_BURAJ 2
-#define PRIKAZ_AKTIVUJ 3
-#define PRIKAZ_UTOC 4
+enum TypPrikazu{
+    BUDUJ,
+    BURAJ,
+    UTOC
+};
 
 struct Prikaz {
-  int typ;
+  TypPrikazu typ;
   int x;   // vyznam x,y,a,b zavisi od typu, vid staticke funkcie nizsie
   int y;
   int a;
   int b;
   static Prikaz buduj(int x, int y, int typ) {
-    return (Prikaz){ PRIKAZ_BUDUJ, x, y, typ, -1 };
+    return (Prikaz){ BUDUJ, x, y, typ, -1 };
   }
   static Prikaz buraj(int x, int y) {
-    return (Prikaz){ PRIKAZ_BURAJ, x, y, -1, -1 };
-  }
-  static Prikaz aktivuj(int x, int y, int destx, int desty) {
-    return (Prikaz){ PRIKAZ_AKTIVUJ, x, y, destx, desty };
+    return (Prikaz){ BURAJ, x, y, -1, -1 };
   }
   static Prikaz utoc(int typ, int hrac) {
-    return (Prikaz){ PRIKAZ_UTOC, -1, -1, typ, hrac };
+    return (Prikaz){ UTOC, -1, -1, typ, hrac };
   }
 };
 
 
 typedef std::vector<Prikaz> Odpoved;
 
+enum TypBudovy{
+    TROLL, //sedí pri ceste, mláti kyjakom. Proti zombie
+    HYDRA, //chomp, môže aj na viac strán. Loví zajace
+    DRAK, //chrlí oheň na všetko, ale má cooldown?
+    TEMNY_CARODEJNIK, //čaruje vždy iba na jedného
+    LASER_RAPTOR,  //
 
-#define VEZA_LASER    0
-#define VEZA_POSTREK  1
-#define VEZA_LUPA     2
-#define VEZA_CARY     3
-#define VEZA_SIPY     4
-#define VEZA_LIENKY   5
-#define VEZA_PLACACKA 6
-
-#define VEZA_ZBERAC    7
-#define VEZA_NASAVAC   8
-#define VEZA_MOTIVATOR 9
-
-#define VEZA_LAB_VOSKA    10
-#define VEZA_LAB_MUCHA    11
-#define VEZA_LAB_HUSENICA 12
-#define VEZA_LAB_SLIMAK   13
-#define VEZA_LAB_MEDVED   14
+    LAB_ZAJAC,
+    LAB_ZOMBIE,
+    LAB_KORITNACKA,
+    LAB_JEDNOROZEC
+};
 
 #define VEZA_POCET_BOJOVYCH 7
 #define VEZA_LAB_PRVY 10
@@ -64,20 +55,20 @@ struct Veza {
   int x;
   int y;
   int typ;
-  int energia;
-  int baseLevel;
-  std::vector<int> levelBonusy;   // pre kazdy bonus ze kolko kol plati
-  int terazTahala;
+  int energia;      //TODO
+//  int baseLevel;
+//  std::vector<int> levelBonusy;   // pre kazdy bonus ze kolko kol plati
+  int terazTahala; //aby nemohol burat v kole ked striela
 
-  int getLevel() const { return baseLevel + levelBonusy.size(); }
+//  int getLevel() const { return baseLevel + levelBonusy.size(); }
 };
 
-
-#define UTOCNIK_VOSKA    0
-#define UTOCNIK_MUCHA    1
-#define UTOCNIK_HUSENICA 2
-#define UTOCNIK_SLIMAK   3
-#define UTOCNIK_MEDVED   4
+enum TypUtocnika{
+    ZAJAC,
+    ZOMBIE,
+    KORITNACKA,
+    JEDNOROZEC
+};
 
 #define UTOCNIK_POCET_TYPOV 5
 
@@ -87,21 +78,21 @@ struct Utocnik {
   int typ;
   int hp;
   int ktorehoHraca;
-  int level;
+//  int level;
 
   int pohybovyTimer;
-  int kolkoSpomaleny;
+//  int kolkoSpomaleny;
 };
 
 
 struct Hrac {
   int body;
-  int drevo;
+  int energia;
   int umrel;
   std::vector<Veza> veze;
-  std::vector<Utocnik> utocnici;
-  std::vector<Utocnik> prichadzajuci;   // klienti nevidia
-  std::vector<int> mapovanie;   // klienti nevidia
+  std::vector<Utocnik> utocnici;        //už v hracom poli
+  std::vector<Utocnik> prichadzajuci;   // klienti nevidia  //maju zautocit TODO načo je to tu? asi to robí nejakú ochranu na spawne ---zrušiť
+  std::vector<int> mapovanie;   // klienti nevidia   //zrušiť, slúžilo na náhodné prečíslovanie protihráčov pri maskovaní stavu, načo keď oni sú náhodne vybratí? treba to aby klient mal číslo 0
 };
 
 
@@ -110,35 +101,41 @@ struct Stav {
   int cas;
 };
 
-
-#define MAPA_VODA    0
-#define MAPA_POZEMOK 1
-#define MAPA_CESTA   2
-#define MAPA_CIEL    3
-#define MAPA_SPAWN   4
+enum Teren{
+    VODA,
+    POZEMOK,
+    CESTA,
+    CIEL,
+    SPAWN
+};
 
 struct Mapa {
   int pocetHracov;
   int w;
   int h;
   std::vector<std::vector<int> > pole;
-  std::vector<std::vector<int> > loziska;
+ // std::vector<std::vector<int> > loziska; //taka zbytocnost
 
-  int zisti(int x, int y) const {
-    return (x >= 0 && x < w && y >= 0 && y < h ? pole[y][x] : MAPA_VODA);
+  Teren zisti(int x, int y) const {                                     //TODO načo je tam to const, je to zbitocne wtf
+    return (x >= 0 && x < w && y >= 0 && y < h ? (Teren)pole[y][x] : VODA);
   }
   bool priechodne(int x, int y) const {
     int m = zisti(x, y);
-    return m == MAPA_CESTA || m == MAPA_CIEL || m == MAPA_SPAWN;
+    return m == CESTA || m == CIEL || m == SPAWN;
   }
 };
 
-#define FORMAT_VERSION 2
 
+#endif
+
+#ifdef reflectenum
+reflectenum(TypPrikazu);
 #endif
 
 #ifdef reflection
 // tieto udaje pouziva marshal.cpp aby vedel ako tie struktury ukladat a nacitavat
+
+
 
 reflection(Prikaz);
   member(typ);
@@ -153,8 +150,6 @@ reflection(Veza);
   member(y);
   member(typ);
   member(energia);
-  member(baseLevel);
-  member(levelBonusy);
   member(terazTahala);
 end();
 
@@ -164,14 +159,12 @@ reflection(Utocnik);
   member(typ);
   member(hp);
   member(ktorehoHraca);
-  member(level);
   member(pohybovyTimer);
-  member(kolkoSpomaleny);
 end();
 
 reflection(Hrac);
   member(body);
-  member(drevo);
+  member(energia);
   member(umrel);
   member(veze);
   member(utocnici);
@@ -189,7 +182,6 @@ reflection(Mapa);
   member(w);
   member(h);
   member(pole);
-  member(loziska);
 end();
 
 #endif

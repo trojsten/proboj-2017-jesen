@@ -21,10 +21,10 @@ struct Prikaz {
   int a;
   int b;
   static Prikaz buduj(int x, int y, int typ) {
-    return (Prikaz){ BUDUJ, x, y, typ, -1 };
+    return (Prikaz){ BUDUJ, x, y, typ, -1 };  //postavi vezu typ na suradnice x,y
   }
   static Prikaz buraj(int x, int y) {
-    return (Prikaz){ BURAJ, x, y, -1, -1 };
+    return (Prikaz){ BURAJ, x, y, -1, -1 };   //buranie je zadarmo
   }
   static Prikaz utoc(int typ, int hrac) {
     return (Prikaz){ UTOC, -1, -1, typ, hrac };
@@ -34,12 +34,13 @@ struct Prikaz {
 
 typedef std::vector<Prikaz> Odpoved;
 
+//konstanty (ceny a damage pre jednotlive dvojice) este niesu
 enum TypBudovy{
-    TROLL, //sedí pri ceste, mláti kyjakom. Proti zombie
-    HYDRA, //chomp, môže aj na viac strán. Loví zajace
-    DRAK,  //chrlí oheň na všetko, ale má cooldown?
-    TEMNY_CARODEJNIK, //čaruje
-    LASER_RAPTOR,  // 
+    TROLL,              //sedí pri ceste, mláti kyjakom. Proti zombie
+    HYDRA,              //chomp, môže aj na viac strán. Loví zajace (iba proti zajacom)
+    DRAK,               //chrlí oheň na všetko
+    TEMNY_CARODEJNIK,   //čaruje
+    LASER_RAPTOR,       // TODO
 
     LAB_ZAJAC,
     LAB_ZOMBIE,
@@ -55,10 +56,10 @@ struct Veza {
   int x;
   int y;
   int typ;
-  int energia;      //TODO
-  int terazTahala; //aby nemohol burat v kole ked striela
+  //int energia;      //TODO vlastne nic
+  int terazTahala; //aby nemohol burat v kole ked striela TODO mozno zrusim
 };
-
+//konstanty (rychlost a hp) este niesu
 enum TypUtocnika{
     ZAJAC,
     ZOMBIE,
@@ -66,7 +67,7 @@ enum TypUtocnika{
     JEDNOROZEC
 };
 
-#define UTOCNIK_POCET_TYPOV 5
+#define UTOCNIK_POCET_TYPOV 4
 
 struct Utocnik {
   int x;
@@ -144,7 +145,7 @@ reflection(Veza);
   member(x);
   member(y);
   member(typ);
-  member(energia);
+  //member(energia);
   member(terazTahala);
 end();
 

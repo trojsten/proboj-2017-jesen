@@ -14,8 +14,8 @@ using namespace std;
 static int DX[] = { 0, 1, 0, -1 };
 static int DY[] = { -1, 0, 1, 0 };
 
-const int kZdrzanieUtoku = 500;
-const int kKoeficientCenyZburania = 2;
+// const int kZdrzanieUtoku = 500;
+// const int kKoeficientCenyZburania = 2;
 const int kVyhernaVzdialenost = 10;
 const int kVyherneBodyZaklad = 50;
 const int kVyherneBodyNasobokP = 2500;
@@ -27,19 +27,19 @@ const int kUvodnaEnergia = 360;
 const int kPrisunDreva = 1;
 const int kPrisunDrevaZaklad = 4;
 
-const int kNasavacRange = 10;
-const int kTrvanieLevelBonusu = 8;
-const int kCaryChcuNaboj = 50;
-const int kLienkyChcuNaboj = 70;
-const int kLienkyKolkoSpomaluju = 5;
+// const int kNasavacRange = 10;
+// const int kTrvanieLevelBonusu = 8;
+// const int kCaryChcuNaboj = 50;
+// const int kLienkyChcuNaboj = 70;
+// const int kLienkyKolkoSpomaluju = 5;
 
-const int kUtocnikHp[UTOCNIK_POCET_TYPOV] = { 100, 30, 80, 130, 400 };
-const int kUtocnikHp1[UTOCNIK_POCET_TYPOV] = { 11, 3, 12, 20, 50 };
-const int kUtocnikRychlost[UTOCNIK_POCET_TYPOV] = { 55, 80, 50, 25, 45 };
+// TODO nastaviť konstanty
+const int kUtocnikHp[UTOCNIK_POCET_TYPOV] = { 100, 30, 80, 130 };
+// const int kUtocnikHp1[UTOCNIK_POCET_TYPOV] = { 11, 3, 12, 20, 50 };
+const int kUtocnikRychlost[UTOCNIK_POCET_TYPOV] = { 55, 80, 50, 25 };
 
-const int kUtokCena[UTOCNIK_POCET_TYPOV] = { 99, 96, 99, 99, 98 };
+// const int kUtokCena[UTOCNIK_POCET_TYPOV] = { 99, 96, 99, 99, 98 };
 
-// TODO kalibrovat! TODO nastaviť od oka
 const int kVezaCena0[VEZA_POCET_TYPOV] = { 159, 133, 147, 196, 141,   72, 80, 61, 86 };
 const int kVezaCena1[VEZA_POCET_TYPOV] = { 10, 17, 7, 10, 5,   0, 0, 0, 0 };
 const int kVezaCena2[VEZA_POCET_TYPOV] = { 0, 0, 0, 0, 0,    0, 0, 0, 0 };

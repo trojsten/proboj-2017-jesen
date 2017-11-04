@@ -1,5 +1,5 @@
 
-#include <ostream>
+#include <iostream>
 #include <vector>
 #include <queue>
 #include <algorithm>
@@ -8,24 +8,23 @@ using namespace std;
 
 #include "common.h"
 #include "update.h"
+#include "marshal.h"
 
 #define ERASE(v,x) (swap((x), *((v).end() - 1)), (v).pop_back())
 
 static int DX[] = { 0, 1, 0, -1 };
 static int DY[] = { -1, 0, 1, 0 };
 
-// const int kZdrzanieUtoku = 500;
-// const int kKoeficientCenyZburania = 2;
-const int kVyhernaVzdialenost = 10;
-const int kVyherneBodyZaklad = 50;
-const int kVyherneBodyNasobokP = 2500;
-const int kVydrzoveBody = 1;
-const int kVezaDamageBase = 35;
-const int kVezaDamageRandom = 35;
+const int kVyhernaVzdialenost = 10; //TODO co to?
+const int kVyherneBodyZaklad = 50;   //TODO
+const int kVyherneBodyNasobokP = 2500;  //TODO
+const int kVydrzoveBody = 1;            //:D
+//const int kVezaDamageBase = 35;
+const int kVezaDamageRandom = 3;
 
-const int kUvodnaEnergia = 360;
-const int kPrisunDreva = 1;
-const int kPrisunDrevaZaklad = 4;
+const int kUvodnaEnergia = 300;
+//const int kPrisunDreva = 1;
+//const int kPrisunDrevaZaklad = 4;
 
 // const int kNasavacRange = 10;
 // const int kTrvanieLevelBonusu = 8;
@@ -33,22 +32,21 @@ const int kPrisunDrevaZaklad = 4;
 // const int kLienkyChcuNaboj = 70;
 // const int kLienkyKolkoSpomaluju = 5;
 
-// TODO nastaviť konstanty
-const int kUtocnikHp[UTOCNIK_POCET_TYPOV] = { 100, 30, 80, 130 };
-// const int kUtocnikHp1[UTOCNIK_POCET_TYPOV] = { 11, 3, 12, 20, 50 };
-const int kUtocnikRychlost[UTOCNIK_POCET_TYPOV] = { 55, 80, 50, 25 };
-
-// const int kUtokCena[UTOCNIK_POCET_TYPOV] = { 99, 96, 99, 99, 98 };
+// TODO nastaviť konstanty7
+//                                              ZAJAC,ZOMBIE,KORITNACKA,JEDNOROZEC
+const int kUtocnikHp[UTOCNIK_POCET_TYPOV] =   {    50,  80,     110,        70 };
+const int kUtocnikRychlost[UTOCNIK_POCET_TYPOV] = { 5,  10,      15,         7 };
 
 const int kVezaCena0[VEZA_POCET_TYPOV] = { 159, 133, 147, 196, 141,   72, 80, 61, 86 };
 const int kVezaCena1[VEZA_POCET_TYPOV] = { 10, 17, 7, 10, 5,   0, 0, 0, 0 };
 const int kVezaCena2[VEZA_POCET_TYPOV] = { 0, 0, 0, 0, 0,    0, 0, 0, 0 };
 
-const int kDamage[UTOCNIK_POCET_TYPOV][VEZA_POCET_BOJOVYCH] = {  //násobiteľ damage nepáči sa mi
-  { 2, 1, 1, 1, 2, },
-  { 2, 1, 4, 0, 1, },
-  { 4, 2, 1, 4, 1, },
-  { 1, 4, 2, 1, 1, },
+const int kDamage[VEZA_POCET_BOJOVYCH][UTOCNIK_POCET_TYPOV] = {
+  {  0,  7,  2,  3 }, //Troll - sedí pri ceste, mláti kyjakom. Proti zombie     0        50        20      30
+  { 10,  0,  0,  0 }, //Hydra - chomp, môže aj na viac strán. Loví zajace      100       0         0        0   
+  {  3,  3,  2,  3 }, //Drak - chrlí oheň na všetko, ale má cooldown?         30         30        20     30
+  { 10, 10, 10, 10 }, //Temný čarodejník - čaruje vždy iba na jedného         100       100        100     100
+  {  1,  3,  1,  2 },     //Laser raptor   
 };
 
 
@@ -113,7 +111,6 @@ static void spravBfs(const Mapa& mapa, vector<int>& dist) {
   }
 }
 
-//TODO bolo na nejaké veci s levelmi
 int vzdialenost(int x1, int y1, int x2, int y2) {
   x1 -= x2; y1 -= y2;
   return x1*x1 + y1*y1;
@@ -125,7 +122,7 @@ template<class T> unsigned najdiXy(const vector<T>& v, int x, int y) {
   return v.size();
 }
 
-//TODO zmeniť nech to nejde cez 3 konštanty
+//OK, tak nech to ide cez 3 konstanty
 int zistiCenuVeze(const Stav& stav, int hrac, int typ) {
   int pocet = 0;
   FOREACH(it, stav.hraci[hrac].veze) if (it->typ == typ) pocet++;
@@ -140,7 +137,7 @@ void vysliUtocnika(Stav& stav, int odKoho, int komu, TypUtocnika typ) {
     u.typ = typ;
     u.hp = kUtocnikHp[typ];
     u.ktorehoHraca = odKoho;
-    u.pohybovyTimer = kUtocnikRychlost[typ];
+    u.pohybovyTimer = -1;//kUtocnikRychlost[typ];
     stav.hraci[komu].prichadzajuci.push_back(u); //TODO nech to nehadze do prichadzajuci ale do utocnici
 }
 
@@ -198,7 +195,8 @@ bool vykonajPrikaz(const Mapa& mapa, Stav& stav, int hrac, const Prikaz& p) {
       TypUtocnika typ = (TypUtocnika)p.a;
       int ciel = p.b;
       if (typ < 0 || typ >= UTOCNIK_POCET_TYPOV) return false;
-      if (ciel <= 0 || ciel >= mapa.pocetHracov) return false;  //na seba neutocime
+      if (ciel < 0 || ciel >= mapa.pocetHracov) return false;
+//       if (ciel <= 0 || ciel >= mapa.pocetHracov) return false;  //na seba neutocime <-this is how to write bugs
       //if (h.energia < kUtokCena[typ]) return false;
       if (stav.hraci[ciel].umrel) return false;
       int uz_poslal=0;
@@ -351,7 +349,7 @@ void odsimulujKolo(const Mapa& mapa, Stav& stav, const vector<Odpoved>& akcie) {
     FOREACH(pu, ph->prichadzajuci) {
       pu->pohybovyTimer--;
       if (pu->pohybovyTimer >= 0) continue; //TODO rovno do utoku
-      pu->pohybovyTimer += 100;
+      pu->pohybovyTimer = 5;
 
       // spawnujeme prijdeneho utocnika na nahodnom spawne
       vector<pair<int,int> > spawnPolia;
@@ -417,7 +415,8 @@ static int indexHodnoty(const vector<int>& pole, int hodnota) {
 void odmaskujOdpoved(const Mapa& mapa, const Stav& stav, int hrac, Odpoved& odpoved) {
   const Hrac& h = stav.hraci[hrac];
   FOREACH(it, odpoved) {
-    if (it->typ == UTOC) it->b = indexHodnoty(h.mapovanie, it->b);
+    if (it->typ == UTOC)
+        it->b = indexHodnoty(h.mapovanie, it->b);
   }
 }
 
@@ -432,7 +431,7 @@ vector<int> ktoriZiju(const Mapa& mapa, const Stav& stav) {
 
 
 bool hraSkoncila(const Mapa& mapa, const Stav& stav) {
-  return ktoriZiju(mapa, stav).size() == 0;
+  return ktoriZiju(mapa, stav).size() == 1;
 }
 
 

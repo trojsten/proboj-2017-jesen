@@ -44,15 +44,9 @@ int pocetVezi(int typ) {
 // main() zavola tuto funkciu, ked chce vediet, ake prikazy chceme vykonat
 void zistiTah() {
   int mojLab = VEZA_LAB_PRVY + akoBudemUtocit;
-  cerr<<"nieco\n";
-  while (pocetVezi(mojLab) < 1) {
-    if (!vykonaj(Prikaz::buduj(rand() % mapa.w, rand() % mapa.h, mojLab))) break;
-  }
-  while (true) {
-    int naKoho = 1 + rand() % (mapa.pocetHracov-1);
-    if (!vykonaj(Prikaz::utoc(akoBudemUtocit, naKoho))) break;
-  }
-  uloz(cerr, prikazy);
+  vykonaj(Prikaz::buduj(rand() % mapa.w, rand() % mapa.h, mojLab));
+  int naKoho = 1 + rand() % (mapa.pocetHracov-1);
+  vykonaj(Prikaz::utoc(akoBudemUtocit, naKoho));
   // hmm este nejaku obranu by to chcelo...
 }
 

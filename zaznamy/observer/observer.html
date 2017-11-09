@@ -1,0 +1,386 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<script src="jquery-2.1.4.min.js"></script>
+</head>
+<body>
+
+<canvas id="myCanvas" width="5000" height="1000" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+<script>
+
+function parseQueryString(queryString) {
+  if (!queryString) return {};
+  var result = {};
+  var pairs = queryString.split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var index = pairs[i].indexOf('=');
+    if (index == -1) {
+      index = pairs[i].length;
+    }
+    var name = pairs[i].substring(0, index);
+    var value = pairs[i].substring(index + 1);
+    result[name] = decodeURIComponent(value.replace(/\+/g, ' '));
+  }
+  return result;
+}
+
+function rnd(max) {
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max)); //The maximum is exclusive??
+}
+
+scale=64
+c = document.getElementById("myCanvas");
+ctx = c.getContext("2d");
+
+var trava = new Image();
+trava.src = "obrazky/grass.png"
+
+var voda = new Image();
+voda.src = "obrazky/stone.png"
+
+var cesta = new Image();
+cesta.src = "obrazky/path.png"
+
+var ciel = new Image();
+ciel.src = "obrazky/cup.png"
+
+var spawn = new Image(); //TODO animovat
+spawn.src = "obrazky/spawn.gif"
+
+
+var zajac = {
+    'source': null,
+    'current': 0,
+    'total_frames': 4,
+    'width': 64,
+    'height': 64
+};
+
+var zombie = {
+    'source': null,
+    'current': 0,
+    'total_frames': 4,
+    'width': 64,
+    'height': 64
+};
+
+var zofka = {
+    'source': null,
+    'current': 0,
+    'total_frames': 4,
+    'width': 64,
+    'height': 64
+};
+
+var corn = {
+    'source': null,
+    'current': 0,
+    'total_frames': 4,
+    'width': 64,
+    'height': 64
+};
+
+var zaj = new Image();
+zaj.src = "obrazky/zajac_right.png"
+zajac.source = zaj;
+
+var zomb = new Image();
+zomb.src = "obrazky/zombie_right.png"
+zombie.source = zomb;
+
+var zof = new Image();
+zof.src = "obrazky/zofka_right.png"
+zofka.source = zof;
+
+var yc = new Image();
+yc.src = "obrazky/yooonicorn_right.png"
+corn.source = yc;
+
+
+function draw(context, x, y, iobj) { // context is the canvas 2d context.
+//     console.log(x,y,iobj.source);
+    if (iobj.source != null)
+        context.drawImage(iobj.source, iobj.current * iobj.width, 0,
+                          iobj.width, iobj.height,
+                          x, y, scale, scale);
+    iobj.current = (iobj.current + 1) % iobj.total_frames;
+}
+
+
+function mapu(kolka){
+
+    for (var i = 0; i < vyska; i++) {
+        for (var j = 0; j < sirka; j++){
+            if (mapa[i][j] == "0"){ctx.drawImage(voda,scale*sirka*kolka+10*kolka+scale*j, scale*i, scale, scale);} //voda
+            if (mapa[i][j] == "1"){ctx.drawImage(trava,scale*sirka*kolka+10*kolka+scale*j, scale*i, scale, scale);} //pozemok
+            if (mapa[i][j] == "2"){ctx.drawImage(cesta,scale*sirka*kolka+10*kolka+scale*j, scale*i, scale, scale);} //cesta
+            if (mapa[i][j] == "3"){ctx.drawImage(cesta,scale*sirka*kolka+10*kolka+scale*j, scale*i, scale, scale);
+                                   ctx.drawImage(ciel,scale*sirka*kolka+10*kolka+scale*j, scale*i, scale, scale);} //ciel
+            if (mapa[i][j] == "4"){ctx.drawImage(cesta,scale*sirka*kolka+10*kolka+scale*j, scale*i, scale, scale);
+                                   ctx.drawImage(spawn,scale*sirka*kolka+10*kolka+scale*j, scale*i, scale, scale);} //spawn
+        }
+    }
+}
+
+var troll = new Image(); //TODO animovat
+troll.src = "obrazky/troll_front.png"
+
+var hydra = new Image(); //TODO animovat
+hydra.src = "obrazky/hydra.png"
+
+var drak = new Image(); //TODO animovat
+drak.src = "obrazky/drak_front.png"
+
+var mag = new Image(); //TODO animovat
+mag.src = "obrazky/carodej_down.png"
+
+var rap = new Image(); //TODO animovat
+rap.src = "obrazky/laser_raptor_right.png"
+
+
+
+var szajac = new Image(); //TODO animovat
+szajac.src = "obrazky/zajac_spawn.png"
+
+var szomb = new Image(); //TODO animovat
+szomb.src = "obrazky/zombie_spawn.png"
+
+var skor = new Image(); //TODO animovat
+skor.src = "obrazky/zofka_spawn.png"
+
+var sjed = new Image(); //TODO animovat
+sjed.src = "obrazky/yoonicorn_spawn.png"
+
+
+function vec(kolka,x,y,co,ake,cislo){
+    //ctx.fillRect(scale*sirka*kolka+10*kolka+scale*x+5, scale*y+5, scale-10, scale-10);
+    if (co==1){//veza
+        if(ake==0){ctx.drawImage(troll,scale*sirka*kolka+10*kolka+scale*x, scale*y, scale, scale);}//     TROLL,
+        if(ake==1){ctx.drawImage(hydra,scale*sirka*kolka+10*kolka+scale*x, scale*y, scale, scale);}//     HYDRA,
+        if(ake==2){ctx.drawImage(drak,scale*sirka*kolka+10*kolka+scale*x, scale*y, scale, scale);}//     DRAK,
+        if(ake==3){ctx.drawImage(mag,scale*sirka*kolka+10*kolka+scale*x, scale*y, scale, scale);}//     TEMNY_CARODEJNIK,
+        if(ake==4){ctx.drawImage(rap,scale*sirka*kolka+10*kolka+scale*x, scale*y, scale, scale);}//     LASER_RAPTOR,
+
+        if(ake==5){ctx.drawImage(szajac, scale*sirka*kolka+10*kolka+scale*x, scale*y, scale, scale);}//     LAB_ZAJAC,
+        if(ake==6){ctx.drawImage(szomb, scale*sirka*kolka+10*kolka+scale*x, scale*y, scale, scale);}//     LAB_ZOMBIE,
+        if(ake==7){ctx.drawImage(skor, scale*sirka*kolka+10*kolka+scale*x, scale*y, scale, scale);}//     LAB_KORITNACKA,
+        if(ake==8){ctx.drawImage(sjed, scale*sirka*kolka+10*kolka+scale*x, scale*y, scale, scale);}//     LAB_JEDNOROZEC
+
+    }
+    if(co==2){//utocnik
+        if(ake==0){draw(ctx,scale*sirka*kolka+10*kolka+scale*x+rnd(10)-5, scale*y+rnd(10)-5, zajac);}//     ZAJAC,
+        if(ake==1){draw(ctx,scale*sirka*kolka+10*kolka+scale*x+rnd(10)-5, scale*y+rnd(10)-5, zombie);}//     ZOMBIE,
+        if(ake==2){draw(ctx,scale*sirka*kolka+10*kolka+scale*x+rnd(10)-5, scale*y+rnd(10)-5, zofka);}//     KORITNACKA,
+        if(ake==3){draw(ctx,scale*sirka*kolka+10*kolka+scale*x+rnd(10)-5, scale*y+rnd(10)-5, corn);}//     JEDNOROZEC
+    }
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = scale/3+"px Arial";
+    if (cislo!=undefined){
+        ctx.fillText(cislo,scale*sirka*kolka+10*kolka+scale*x,scale*y+scale/3);
+    }
+}
+
+function kresli(){
+    console.log(kolo);
+    if(kola[kolo]==undefined)return
+   console.log(kola[kolo]);
+//   console.log(pocethracov)
+    for(var i=0; i<pocethracov; i++){
+//         console.log(kola[kolo]["hraci"][i]["veze"]);
+        vezi=kola[kolo]["hraci"][i]["veze"].length
+        utocnikov=kola[kolo]["hraci"][i]["utocnici"].length
+
+//         console.log(vezi)
+
+        mapu(i);
+
+        for(var  j=0; j<vezi; j++){
+            vec(i,kola[kolo]["hraci"][i]["veze"][j].x,kola[kolo]["hraci"][i]["veze"][j].y,1,kola[kolo]["hraci"][i]["veze"][j].typ
+            , kola[kolo]["hraci"][i]["veze"][j].energia);
+        }
+        for(var j=0; j<utocnikov; j++){
+//             console.log(i,j)
+            vec(i,kola[kolo]["hraci"][i]["utocnici"][j].x,kola[kolo]["hraci"][i]["utocnici"][j].y,2,kola[kolo]["hraci"][i]["utocnici"][j].typ,
+            kola[kolo]["hraci"][i]["utocnici"][j].hp);
+        }
+
+        //if(kola[kolo][i][1+j*2]!=0)ctx.fillText(kola[kolo][i][1+j*2],24*j+6,24*i+16);
+    }
+    kolo++;
+}
+//pocethracov=0
+//stiahni podklad
+function stiahnimapu(){
+    var query = parseQueryString(location.search.substring(1));
+
+    if (!query.zaznam) {
+        return;
+    }
+
+    $.get("../zaznamy/" + query.zaznam + "/map", function(data,status){
+        vsetko=data.split("\n");
+        it=0;
+        pocethracov=dalsi()
+        sirka=dalsi()
+        vyska=dalsi()
+        mapa=[]
+        dalsi()
+        for (i = 0; i < vyska; i++) {
+            dalsi()
+            mapa[i]=[]
+            for(j=0; j<sirka; j++){
+                mapa[i][j]=dalsi()
+            }
+        }
+    }, "text"
+    );
+}
+stiahnimapu();
+
+function dalsi(){
+  it++;
+  return vsetko[it-1];
+
+}
+
+function hasdalsi(){
+    if (vsetko[it]==undefined)
+        return false;
+    else
+        return true;
+}
+
+function stiahni(kol){
+    var query = parseQueryString(location.search.substring(1));
+
+    if (!query.zaznam) {
+        return;
+    }
+
+    console.log($.get("http://localhost:8000/zaznamy/" + query.zaznam + "/log", function(data,status){
+        console.log("splitujem");
+        vsetko=data.split("\n");
+        console.log("splitol")
+        k=0;
+        kola=[]
+        it=0;
+        while(hasdalsi()){
+        console.log(k, it);
+            kola[k]={};
+            hracov=dalsi();
+            kola[k]["hraci"]=[]
+            for(i=0; i<hracov; i++){
+                kola[k]["hraci"][i]={}
+                kola[k]["hraci"][i]["body"]=dalsi();
+                kola[k]["hraci"][i]["energia"]=dalsi();
+                kola[k]["hraci"][i]["umrel"]=dalsi();
+                vezi=dalsi();
+                kola[k]["hraci"][i]["veze"]=[]
+                for(j=0; j<vezi; j++){
+                    kola[k]["hraci"][i]["veze"][j]={};
+                    kola[k]["hraci"][i]["veze"][j]["x"]=dalsi();
+                    kola[k]["hraci"][i]["veze"][j]["y"]=dalsi();
+                    kola[k]["hraci"][i]["veze"][j]["typ"]=dalsi();
+                    kola[k]["hraci"][i]["veze"][j]["energia"]=dalsi();
+                }
+                utocnikov=dalsi();
+                kola[k]["hraci"][i]["utocnici"]=[]
+                for(j=0; j<utocnikov; j++){
+                    kola[k]["hraci"][i]["utocnici"][j]={};
+                    kola[k]["hraci"][i]["utocnici"][j]["x"]=dalsi();
+                    kola[k]["hraci"][i]["utocnici"][j]["y"]=dalsi();
+                    kola[k]["hraci"][i]["utocnici"][j]["typ"]=dalsi();
+                    kola[k]["hraci"][i]["utocnici"][j]["hp"]=dalsi();
+                    kola[k]["hraci"][i]["utocnici"][j]["ktorehoHraca"]=dalsi();
+                    kola[k]["hraci"][i]["utocnici"][j]["pohybovyTimer"]=dalsi();
+                    kola[k]["hraci"][i]["utocnici"][j]["presiel"]=dalsi();
+                }
+                prichadzajucich=dalsi();
+                kola[k]["hraci"][i]["prichadzajuci"]=[]
+                for(j=0; j<prichadzajucich; j++){
+                    kola[k]["hraci"][i]["prichadzajuci"][j]={};
+                    kola[k]["hraci"][i]["prichadzajuci"][j]["x"]=dalsi();
+                    kola[k]["hraci"][i]["prichadzajuci"][j]["y"]=dalsi();
+                    kola[k]["hraci"][i]["prichadzajuci"][j]["typ"]=dalsi();
+                    kola[k]["hraci"][i]["prichadzajuci"][j]["hp"]=dalsi();
+                    kola[k]["hraci"][i]["prichadzajuci"][j]["ktorehoHraca"]=dalsi();
+                    kola[k]["hraci"][i]["prichadzajuci"][j]["pohybovyTimer"]=dalsi();
+                }
+                mapovania=dalsi();
+                kola[k]["hraci"][i]["mapovanie"]=[]
+                for(j=0; j<mapovania; j++){
+                    kola[k]["hraci"][i]["mapovanie"][j]=dalsi();
+                }
+            }
+            kola["cas"]=dalsi();
+            k++;
+        }
+        //mapu();
+        //kresli
+        kolo=0;
+        console.log(kola[30])
+        IntervalId =setInterval(kresli,100);
+    }, "text"))
+}
+stiahni(1); //TODO document ready
+/*
+struct Veza {
+  int x;
+  int y;
+  int typ;
+  //int energia;
+  int terazTahala;
+};
+enum TypUtocnika{
+    ZAJAC,
+    ZOMBIE,
+    KORITNACKA,
+    JEDNOROZEC
+};
+
+struct Utocnik {
+  int x;
+  int y;
+  TypUtocnika typ;
+  int hp;
+  int ktorehoHraca;
+  int pohybovyTimer; //kolko tahov bude este na danom policku
+};
+
+struct Hrac {
+  int body;
+  int energia;
+  int umrel;
+  std::vector<Veza> veze;
+  std::vector<Utocnik> utocnici;        //už v hracom poli
+  std::vector<Utocnik> prichadzajuci;   // klienti nevidia  //este len maju zautocita TODO načo je to tu?
+  std::vector<int> mapovanie;   // klienti nevidia   //zrušiť, slúžilo na náhodné prečíslovanie protihráčov pri maskovaní stavu, načo keď oni sú náhodne vybratí? treba to aby klient mal číslo 0
+};
+
+struct Stav {
+  std::vector<Hrac> hraci;
+  int cas;
+};*/
+
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

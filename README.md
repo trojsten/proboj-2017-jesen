@@ -1,7 +1,6 @@
 # proboj-2017-jesen Tower defense-offense
 
-Nieje vo funkčnom stave
-
+OUTDATED 
 ## Co treba na rozbehanie proboja?
 
 Nasledujúci návod slúži na spustenie hlavného kompu, ak chcete len kódiť 

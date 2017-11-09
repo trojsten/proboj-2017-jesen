@@ -11,34 +11,29 @@ Zdrojáky
 Štandardný hráč, čiže klient (v adresári `klienti/template`), sa skladá z jediného
 zdrojáku `main.cpp`. Ale môžete ho rozdeliť aj na viacero.
 
-V serveri je tiež zopár zdrojákov, čo vás bude zaujímať.
+V serveri (adresár `server`) je tiež zopár zdrojákov, čo vás bude zaujímať.
 
 - `common.h` obsahuje základné štruktúry, čo váš klient dostane k dispozícii.
-- `update.cpp` a `update.h` obsahujú všetky herné konštanty, a tiež
+- `update.cpp` obsahuje všetky herné konštanty, a tiež
   implementáciu väčšiny herných pravidiel, takže ak v pravidlách nie je niečo
-  jasné, skúste sa tam pozrieť.
-- v `main.cpp` sú tiež nejaké pravidlá (ako sa ťahá apod.), ale to je menej
-  dôležité.
+  jasné, pýtajte sa alebo sa skúste pozrieť tam.
 
-Kľudne si prečítajte aj ostatné zdrojáky, ja, Tomi a Bui sa len potešíme, 
-ale pri kódení vášho klienta vám asi nepomôžu.
+Ak máte potrebu čítať ostatné zdrojáky, niekde nastala chyba. 
+Pri kódení vášho klienta vám asi nepomôžu.
 
 Ako kódiť klienta
 -----------------
 
-Skopírujte obsah `klienti/template` do iného adresára a niečo v ňom nakóďte.
+Skopírujte obsah `klienti/template` (alebo `klienti/hlupy`) do iného adresára a 
+niečo v ňom nakóďte.
 
-V koreni proboja spustite `make`, čím všetko skompilujete. (Ak váš klient nie je
-vnútri `klienti`, nastavte v jeho `Makefile` správny `SERVERDIR` a spustite
-`make` aj v ňom.)
+V priečinku proboja spustite `make`, čím všetko skompilujete. (Váš klient by 
+mal byť v priečinku `klienti/meno_klienta`)
 
-Potom spustite `./server/server zaznamy/01 mapy/simple20x20-4.ppm klienti/vasklient
-klienti/vasklient klienti/hlupy` To spustí hru s troma hráčmi (vaším, druhým
+Potom spustite `./server/server zaznamy/01 mapy/symmetry.ppm klienti/vasklient klienti/vasklient klienti/hlupy` To spustí hru s troma hráčmi (vaším, druhým
 vaším a hlúpym) a uloží záznam do `zaznamy/01`. Ten si môžete pozrieť tak,
-že najprv zmeníte working directory na `observer` (príkaz `cd observer`)
-a potom zadáte príkaz `java -jar observer.jar ../zaznamy/01`.
-Ak vám java nefunguje, môžete použiť alternatívny observer ktorý nie je taký 
-pekný, a nezobrazuje všetko, spustíte ho `./observer ../zaznamy/01/observation`. 
+že spustíte v priečinku proboja `python3 -m http.server` a v prehliadači 
+otvoríte `http://localhost:8000/observer/observer.html`
 
 Na začiatku hry dostane váš klient informácie o hre --- terén mapy.
 Tiež má pritom viac času, aby sa mohol inicializovať --- server chvíľu počká, 
@@ -49,7 +44,7 @@ limit je dosť veľký, ale ak to bude naozaj dlho trvať, server nečaká. Ak k
 dlho neodpovedá, alebo program skončí (napríklad chybou), server ho znovu spustí
 a pošle mu úvodné dáta (mapu).
 
-Keď server spustíte u vás, je to len na skúšku. Na hlavnom počítači to beží na
+Keď server spustíte u vás, je to len na testovanie. Na hlavnom počítači to beží na
 ostro. Je tam aj webové rozhranie, cez ktoré môžete uploadovať vašich klientov.
 Uploadujú sa zdrojáky a tie sa potom skompilujú (konkrétne sa spustí `make
 naserveri SERVERDIR=/adresar/kde/je/server`).
@@ -58,52 +53,36 @@ naserveri SERVERDIR=/adresar/kde/je/server`).
 Aký je proboj
 -------------
 
-Hra sa volá Mad Scientists.
+Hra sa volá Tower Defense.
 
-Na mape sú labáky, mestá, skaly a voľné políčka.
-Na začiatku hry vlastníte jeden labák, v ktorom môžete vyrábať robotov. Sila 
-robora závisí od toho koľko éteru na jeho výrobu použijete --- čím viac tým 
-silnejší. Éter získavate za keždý obsadený labák, mesto a za každých 9 políčok.
-Políčko vlastní ten, koho robot na ňom bol ako posledný. Na každom políčku môže 
-byť len jeden robot.
+Každý hráč má (rovnakú) vlastnú mapu. 
+Na mape je váša trofej, ku ktorej sa snažia dostať votrelci od ostatných hráčov.
+Hrad môžete chrániť tým, že postavíte veže, ktoré na nich budú útočiť. Okrem toho, môžete 
+ešte posaviť špeciálne laboratória, z ktorých viete posielať útočníkov ostatným hráčom.
 
-Vaším cielom je ovládnuť svet. Problém je, že nie ste jediní, kto sa o to snaží.
-Na mape sú labáky ostatných hráčov, ktorí tiež stavajú robotov. Keď sa dvaja 
-roboti stretnú, silnejší vyhráva a slabší zomiera.
-
-Finálne skóre je množstvo éteru získané za celú hru.
 
 Ako sa ťahá
 -----------
 
-V každom kole dostanete pohľad na mapu, tak ako ju vidieť z vášho územia.
-To znamená celé vaše územie a dve políčka okolo. O každom políčku ktoré vidíte,
-viete kto ho vlastní, a aký silný robot tam stojí. Na ostatných políčkach je 
-majiteľ `-1` a robot so silou `0`.
-
-Váš ťah je postupnosť príkazov pre jednotlivých robotov, a pre labáky.
-Každému robotovi môžete (nemusíte) povedať smer ktorým sa má pohnúť a každému 
-labáku silu robota ktorého má postaviť. Ak robot alebo labák nedostane príkaz, 
-nič nerobí.
+V každom kole dostanete celý stav hry, to znamená o každom hráčovi, zistíte aké má 
+veže, kde sú, akí útočníci od neho útočia
 
 Template klienta je v `C++`, ak chcete použiť iný jazyk, tu budú technické 
-podrobnosti (ak bude mať niekto záujem):
+podrobnosti (ak bude mať niekto záujem a povie mi to):
 
 Pravidlá hry
 ------------
 
-V každom kole sa dejú jednotlivé udalosti v tomto poradí:
-zomrú roboti ktorí išli proti múru,
-pobijú sa roboti ktorí išli proti sebe (silnejší prejde, slabší zomrie),
-postavia sa roboti v labákoch (ak je tam miesto),
-pobijú sa roboti ktorí sú na jednom políčku (ak je viac rovnako silných, vyberie sa náhodne).
+Váš program posiela 3 typi príkazov. Príkazy typu BUDUJ, pomocou ktorého staviate veže.
+Existuje 5 typov obranných veží: TROLL, HYDRA, DRAK, MAG, RAPTOR. Každá z nich dokáže 
+útočiť na všetkých útočníkov (okrem hydri, ktorá útočí len na lietajúce zajace).
+postavenie veže vyžaduje nejaké množstvo energie, ktoré z každou ďaľšou postavenou vežou rastie.
 
-Pravidlá sú veľmi jednoduché, ako bolo z časti popísané vyššie. Pre
-konkrétne informácie odporúčam pýtať sa, alebo nahliadnuť do update.cpp
-a poloviť v komentároch --- haha komentáre tam nie sú.
+Energiu získavati viacerímy spôsobmi. Nejaké množstvo energie máte na začiatku, niečo dostanete každé kolo,
+ale hlavné je, že energiu získate aj za každé políčko ktoré prejde útočník ktorého vyšlete a ktorého zabijete.
 
-Mapy
-----
+Existujú 4 typi útočníkov, každý typ generuje jedna špeciálna veža. Útočníci sú: ZAJAC, ZOMBIE, KORYTNACKA, JEDNOROZEC.
 
-Každá mapa má v názve rozmery a počet hráčov ktorí sa na ňu zmestia.
-Každá mapa je ohraničená skalami (observer niektoré skaly zobrazuje ako vodu, pre vás v tom nie je rozdiel)
+Veža dokáže vyslať jedného útočníka každých niekoľko kôl.
+
+Všetky vyššie spomenuté konštanty nájdete v súbore `update.cpp`.

@@ -15,38 +15,35 @@ using namespace std;
 static int DX[] = { 0, 1, 0, -1 };
 static int DY[] = { -1, 0, 1, 0 };
 
-const int kVyhernaVzdialenost = 10; //TODO co to?
-const int kVyherneBodyZaklad = 50;   //TODO
-const int kVyherneBodyNasobokP = 2500;  //TODO
-const int kVydrzoveBody = 1;            //:D
-//const int kVezaDamageBase = 35;
+const int kVyhernaVzdialenost = 1;
+const int kVyherneBodyZaklad = 50;
+const int kVyherneBodyNasobokP = 2500;
+const int kVydrzoveBody = 1;
+
 const int kVezaDamageRandom = 3;
 
-const int kUvodnaEnergia = 300;
-//const int kPrisunDreva = 1;
-//const int kPrisunDrevaZaklad = 4;
+const int kUvodnaEnergia = 500;
+const int kPrisunEnergieZaklad = 2;
+const int kPrisunEnergieKill = 3;
+const int kPrisunEnergieDead = 0.1;
 
-// const int kNasavacRange = 10;
-// const int kTrvanieLevelBonusu = 8;
-// const int kCaryChcuNaboj = 50;
-// const int kLienkyChcuNaboj = 70;
-// const int kLienkyKolkoSpomaluju = 5;
+//                                              ZAJAC,ZOMBIE,KORYTNACKA,JEDNOROZEC
+const int kUtocnikHp[UTOCNIK_POCET_TYPOV] =   {    50,  90,     110,        70 };
+const int kUtocnikRychlost[UTOCNIK_POCET_TYPOV] = { 5,  10,      15,         7 }; //cas na policku
 
-// TODO nastaviť konstanty7
-//                                              ZAJAC,ZOMBIE,KORITNACKA,JEDNOROZEC
-const int kUtocnikHp[UTOCNIK_POCET_TYPOV] =   {    50,  80,     110,        70 };
-const int kUtocnikRychlost[UTOCNIK_POCET_TYPOV] = { 5,  10,      15,         7 };
+//                                       TROLL HYDRA DRAK MAG RAPTOR  ZAJAC ZOMBIE KORYTNACKA JEDNOROZEC
+const int kVezaCena0[VEZA_POCET_TYPOV] = { 159, 133, 147, 296,  24,   472,    480,        461,      486 };
+const int kVezaCena1[VEZA_POCET_TYPOV] = { 10,   17,   7,  10,   5,   0,       0,         0,         0 };
+const int kVezaCena2[VEZA_POCET_TYPOV] = { 0,    0,    0,   5,   0,   0,       0,         0,         0 };
 
-const int kVezaCena0[VEZA_POCET_TYPOV] = { 159, 133, 147, 196, 141,   72, 80, 61, 86 };
-const int kVezaCena1[VEZA_POCET_TYPOV] = { 10, 17, 7, 10, 5,   0, 0, 0, 0 };
-const int kVezaCena2[VEZA_POCET_TYPOV] = { 0, 0, 0, 0, 0,    0, 0, 0, 0 };
+const int kVezaCooldown[UTOCNIK_POCET_TYPOV] = { 7, 9, 19, 30 };
 
 const int kDamage[VEZA_POCET_BOJOVYCH][UTOCNIK_POCET_TYPOV] = {
-  {  0,  7,  2,  3 }, //Troll - sedí pri ceste, mláti kyjakom. Proti zombie     0        50        20      30
-  { 10,  0,  0,  0 }, //Hydra - chomp, môže aj na viac strán. Loví zajace      100       0         0        0   
-  {  3,  3,  2,  3 }, //Drak - chrlí oheň na všetko, ale má cooldown?         30         30        20     30
-  { 10, 10, 10, 10 }, //Temný čarodejník - čaruje vždy iba na jedného         100       100        100     100
-  {  1,  3,  1,  2 },     //Laser raptor   
+  {  0,  7,  2,  3 }, //Troll
+  { 10,  0,  0,  0 }, //Hydra
+  {  3,  3,  2,  3 }, //Drak
+  { 10, 10, 10, 10 }, //Mag
+  {  1,  3,  1,  2 }, //Laser raptor
 };
 
 
@@ -54,7 +51,7 @@ static ostream* g_observation;
 void zapniObservation(ostream* observation) { g_observation = observation; }
 
 
-//este viac agicke makro by Tomi
+//este viac magicke makro by Tomi
 #define OBSERVE(s,...) do {                                                    \
     if (!g_observation) break;                                                 \
     *g_observation << (s);                                                     \
@@ -122,7 +119,6 @@ template<class T> unsigned najdiXy(const vector<T>& v, int x, int y) {
   return v.size();
 }
 
-//OK, tak nech to ide cez 3 konstanty
 int zistiCenuVeze(const Stav& stav, int hrac, int typ) {
   int pocet = 0;
   FOREACH(it, stav.hraci[hrac].veze) if (it->typ == typ) pocet++;
@@ -131,6 +127,7 @@ int zistiCenuVeze(const Stav& stav, int hrac, int typ) {
 
 
 void vysliUtocnika(Stav& stav, int odKoho, int komu, TypUtocnika typ) {
+    //cerr<<"utocnik od" << odKoho <<" pre "<<komu<< " typ "<<typ<<endl;
   OBSERVE("vysliUtocnikov", odKoho, komu, typ);
     Utocnik u;
     u.x = u.y = -1;
@@ -138,6 +135,7 @@ void vysliUtocnika(Stav& stav, int odKoho, int komu, TypUtocnika typ) {
     u.hp = kUtocnikHp[typ];
     u.ktorehoHraca = odKoho;
     u.pohybovyTimer = -1;//kUtocnikRychlost[typ];
+    u.presiel = 0;
     stav.hraci[komu].prichadzajuci.push_back(u); //TODO nech to nehadze do prichadzajuci ale do utocnici
 }
 
@@ -147,13 +145,13 @@ void vezaZautoc(const Mapa& mapa, Stav& stav, int hrac, int veza, int utocnik) {
   Veza& v = h.veze[veza];
   Utocnik& u = h.utocnici[utocnik];
 
-  int damage = 0;
-  damage += kDamage[v.typ][u.typ] + rand() % kVezaDamageRandom;
+  int damage = kDamage[v.typ][u.typ] + rand() % kVezaDamageRandom;
   
-
   OBSERVE("vezaZautoc", hrac, v.x, v.y, utocnik, damage);
   u.hp -= damage;
   if (u.hp <= 0) {
+    h.energia+=kPrisunEnergieKill;
+    stav.hraci[u.ktorehoHraca].energia += kPrisunEnergieDead * u.presiel;
     OBSERVE("vezaZautoc.umrel", hrac, v.x, v.y, utocnik);
     OBSERVE("erase.utocnici", hrac, utocnik, (int)h.utocnici.size() - 1);
     ERASE(h.utocnici, h.utocnici[utocnik]);
@@ -165,19 +163,19 @@ bool vykonajPrikaz(const Mapa& mapa, Stav& stav, int hrac, const Prikaz& p) {
   Hrac& h = stav.hraci[hrac];
   switch (p.typ) {
     case BUDUJ: {
-      int typ = p.a;
+      TypBudovy typ = (TypBudovy)p.a;
       if (typ < 0 || typ >= VEZA_POCET_TYPOV) return false;            //TODO nejake warningy
-      if (najdiXy(h.veze, p.x, p.y) != h.veze.size()) return false;  //policko nieje volne
+      if (najdiXy(h.veze, p.x, p.y) != h.veze.size()) return false;  //policko nieje volne, nemozme tam stavat
       if (mapa.zisti(p.x, p.y) != POZEMOK) return false;
       int cena = zistiCenuVeze(stav, hrac, typ);
-      if (h.energia < cena) return false;
+      if (h.energia < cena) return false;   //nemas na to
       OBSERVE("vykonajPrikaz.buduj", hrac, p.x, p.y, typ);
       h.energia -= cena;
       Veza nova;
       nova.x = p.x;
       nova.y = p.y;
       nova.typ = typ;
-      nova.terazTahala = 1;
+      nova.energia=0;
       h.veze.push_back(nova);
       return true;
     }
@@ -185,7 +183,6 @@ bool vykonajPrikaz(const Mapa& mapa, Stav& stav, int hrac, const Prikaz& p) {
     case BURAJ: {
       unsigned i = najdiXy(h.veze, p.x, p.y);
       if (i == h.veze.size()) return false;   //TODO warningy
-      if (h.veze[i].terazTahala) return false;
       OBSERVE("vykonajPrikaz.buraj", hrac, p.x, p.y);
       ERASE(h.veze, h.veze[i]);
       return true;
@@ -194,6 +191,7 @@ bool vykonajPrikaz(const Mapa& mapa, Stav& stav, int hrac, const Prikaz& p) {
     case UTOC: {
       TypUtocnika typ = (TypUtocnika)p.a;
       int ciel = p.b;
+      if (hrac==ciel) return false;
       if (typ < 0 || typ >= UTOCNIK_POCET_TYPOV) return false;
       if (ciel < 0 || ciel >= mapa.pocetHracov) return false;
 //       if (ciel <= 0 || ciel >= mapa.pocetHracov) return false;  //na seba neutocime <-this is how to write bugs
@@ -209,12 +207,20 @@ bool vykonajPrikaz(const Mapa& mapa, Stav& stav, int hrac, const Prikaz& p) {
           if (pu->typ == typ && pu->ktorehoHraca == hrac) uz_poslal++;
         }
       }
+      int minimum = 9999;
       int moze = 0;
+      int ktora;
+      
       FOREACH(it, h.veze) if (it->typ == VEZA_LAB_PRVY + typ) {
+        if(it->energia<minimum){
+          minimum = it->energia;
+          ktora=it-h.veze.begin();
+        }
         moze++;
       }
-      if (moze<=uz_poslal) return false;
+      if (moze <= uz_poslal || minimum > 0 ) return false;
 //       h.drevo -= kUtokCena[typ];
+      if (h.veze[ktora].typ>=VEZA_LAB_PRVY)h.veze[ktora].energia = kVezaCooldown[h.veze[ktora].typ - VEZA_LAB_PRVY];
       vysliUtocnika(stav, hrac, ciel, typ);
       return true;
     }
@@ -246,6 +252,7 @@ void odsimulujUtocnika(const Mapa& mapa, Stav& stav, const vector<int>& dist, in
     }
     if (smery.size()) {
       int smer = smery[rand() % smery.size()];
+      u.presiel++;
       OBSERVE("odsimulujUtocnika", hrac, utocnik, u.x, u.y, u.x + DX[smer], u.y + DY[smer]);
       u.x += DX[smer];
       u.y += DY[smer];
@@ -273,7 +280,7 @@ void odsimulujPrehru(const Mapa& mapa, Stav& stav, const vector<int>& dist, int 
     for (int i = 0; i < mapa.pocetHracov; i++) {
       if (i != hrac && hlasy[i] && hlasy[i] > best/2) {
         OBSERVE("odsimulujPrehru", hrac, i);
-        stav.hraci[i].body += kVyherneBodyZaklad + kVyherneBodyNasobokP;// * totalLevel / 100;
+        stav.hraci[i].body += kVyherneBodyZaklad + kVyherneBodyNasobokP/ 100;
       }
     }
     h.umrel = true;
@@ -297,13 +304,14 @@ void odsimulujVezu(const Mapa& mapa, Stav& stav, const vector<int>& dist, int hr
   if (v.typ < VEZA_POCET_BOJOVYCH) {
     int best = -1, bestdist = -1;
     FOREACH(pu, h.utocnici) {
-      // dostrel veze = level veze
       if (vzdialenost(v.x, v.y, pu->x, pu->y) <= 1) {
         // mojdist == kolko tahov potrva, kym sa dostanem do ciela
         int mojdist = ((dist[pu->y*mapa.w + pu->x] - 1) * kUtocnikRychlost[pu->typ] + pu->pohybovyTimer);
         if (best == -1 || mojdist < bestdist) {
-          best = pu - h.utocnici.begin();
-          bestdist = mojdist;
+          if((v.typ==HYDRA && pu->typ==ZAJAC)||v.typ!=HYDRA) {
+            best = pu - h.utocnici.begin();
+            bestdist = mojdist;
+          }
         }
       }
     }
@@ -342,14 +350,11 @@ void odsimulujKolo(const Mapa& mapa, Stav& stav, const vector<Odpoved>& akcie) {
 
   FOREACH(ph, stav.hraci) {
     FOREACH(pv, ph->veze) {
-      pv->terazTahala = 0;
+        pv->energia--;
     }
-
-
+      
     FOREACH(pu, ph->prichadzajuci) {
-      pu->pohybovyTimer--;
-      if (pu->pohybovyTimer >= 0) continue; //TODO rovno do utoku
-      pu->pohybovyTimer = 5;
+      pu->pohybovyTimer = kUtocnikRychlost[pu->typ];
 
       // spawnujeme prijdeneho utocnika na nahodnom spawne
       vector<pair<int,int> > spawnPolia;
@@ -367,7 +372,7 @@ void odsimulujKolo(const Mapa& mapa, Stav& stav, const vector<Odpoved>& akcie) {
       --pu;
     }
 
-    ph->energia += kPrisunDrevaZaklad; //TODO zisk energie za vsetko
+    ph->energia += kPrisunEnergieZaklad; //TODO zisk energie za vsetko
     if (!ph->umrel) ph->body += kVydrzoveBody; //TODO body budeme ratat inak
   }
 
@@ -431,7 +436,7 @@ vector<int> ktoriZiju(const Mapa& mapa, const Stav& stav) {
 
 
 bool hraSkoncila(const Mapa& mapa, const Stav& stav) {
-  return ktoriZiju(mapa, stav).size() == 1;
+  return ktoriZiju(mapa, stav).size() <= 1;
 }
 
 

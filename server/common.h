@@ -34,13 +34,13 @@ struct Prikaz {
 
 typedef std::vector<Prikaz> Odpoved;
 
-//konstanty (ceny a damage pre jednotlive dvojice) este niesu
+
 enum TypBudovy{
-    TROLL,              //sedí pri ceste, mláti kyjakom. Proti zombie
-    HYDRA,              //chomp, môže aj na viac strán. Loví zajace (iba proti zajacom)
-    DRAK,               //chrlí oheň na všetko
+    TROLL,              //sedí pri ceste, mláti kyjakom
+    HYDRA,              //Loví zajace (na iných neútočí)
+    DRAK,               //chrlí oheň
     TEMNY_CARODEJNIK,   //čaruje
-    LASER_RAPTOR,       // TODO
+    LASER_RAPTOR,       //VRRRRRRRRR
 
     LAB_ZAJAC,
     LAB_ZOMBIE,
@@ -49,17 +49,16 @@ enum TypBudovy{
 };
 
 #define VEZA_POCET_BOJOVYCH 5
-#define VEZA_LAB_PRVY 6
+#define VEZA_LAB_PRVY 5
 #define VEZA_POCET_TYPOV 9
 
 struct Veza {
   int x;
   int y;
-  int typ;
-  //int energia;      //TODO nejaký cooldown pre laby
-  int terazTahala; //aby nemohol burat v kole ked striela TODO mozno zrusim
+  TypBudovy typ;
+  int energia; //nejaký cooldown pre laby
 };
-//konstanty (rychlost a hp) este niesu
+
 enum TypUtocnika{
     ZAJAC,
     ZOMBIE,
@@ -76,17 +75,19 @@ struct Utocnik {
   int hp;
   int ktorehoHraca;
   int pohybovyTimer; //kolko tahov bude este na danom policku
+  int presiel; //kolko policok presiel od spawnu
 };
 
 
 struct Hrac {
   int body;
   int energia;
-  int umrel;   //TODO int? nie nahodou bool?
+  bool umrel;
   std::vector<Veza> veze;
-  std::vector<Utocnik> utocnici;        //už v hracom poli
-  std::vector<Utocnik> prichadzajuci;   // klienti nevidia  //este len maju zautocita su na spawne TODO načo je to tu?
-  std::vector<int> mapovanie;   // klienti nevidia   //zrušiť, slúžilo na náhodné prečíslovanie protihráčov pri maskovaní stavu, načo keď oni sú náhodne vybratí? treba to aby klient mal číslo 0
+  std::vector<Utocnik> utocnici;
+  
+  std::vector<Utocnik> prichadzajuci;   // klienti nevidia
+  std::vector<int> mapovanie;   // klienti nevidia
 };
 
 
@@ -145,8 +146,8 @@ reflection(Veza);
   member(x);
   member(y);
   member(typ);
-  //member(energia);
-  member(terazTahala);
+  member(energia);
+  //member(terazTahala);
 end();
 
 reflection(Utocnik);
@@ -156,6 +157,7 @@ reflection(Utocnik);
   member(hp);
   member(ktorehoHraca);
   member(pohybovyTimer);
+  member(presiel);
 end();
 
 reflection(Hrac);

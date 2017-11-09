@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
   Stav stav = zaciatokHry(mapa, klienti.size());
   uloz(logstream, stav);
 
-  while (!hraSkoncila(mapa, stav)) {
+  while (!hraSkoncila(mapa, stav) && stav.cas< 2000) {
     vector<int> zijuci = ktoriZiju(mapa, stav);
     vector<Klient*> pZijuci;
     vector<string> requesty;
@@ -148,7 +148,8 @@ int main(int argc, char *argv[]) {
   zabiKlientov();
 
   stringstream rankbuf;
-  uloz(rankbuf, zistiRank(stav));
+  vector<int> v= zistiRank(stav);
+  for(int i=0; i<v.size(); i++)rankbuf<<v[i]<<endl;
   ofstream rankstream((zaznamovyAdresar+"/rank").c_str());
   rankstream << rankbuf.str();
   rankstream.close();

@@ -6,12 +6,6 @@
 
 #include "common.h"
 
-
-#include <iostream>
-#include <vector>
-#include <queue>
-#include <algorithm>
-#include <cmath>
 using namespace std;
 
 #include "common.h"
@@ -41,7 +35,7 @@ extern const int kVezaCena2[VEZA_POCET_TYPOV];
 
 extern const int kVezaCooldown[UTOCNIK_POCET_TYPOV];
 
-extern const int kDamage[VEZA_POCET_BOJOVYCH][UTOCNIK_POCET_TYPOV];*/
+extern const int kDamage[VEZA_POCET_BOJOVYCH][UTOCNIK_POCET_TYPOV];
 
 void zapniObservation(std::ostream* observation);
 Stav zaciatokHry(const Mapa& mapa, int hracov);

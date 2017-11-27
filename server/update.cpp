@@ -16,8 +16,7 @@ static int DX[] = { 0, 1, 0, -1 };
 static int DY[] = { -1, 0, 1, 0 };
 
 const int kVyhernaVzdialenost = 1;
-const int kVyherneBodyZaklad = 50;
-const int kVyherneBodyNasobokP = 2500;
+const int kVyherneBodyZaklad = 250;
 const int kVydrzoveBody = 1;
 
 const int kVezaDamageRandom = 3;
@@ -25,7 +24,7 @@ const int kVezaDamageRandom = 3;
 const int kUvodnaEnergia = 500;
 const int kPrisunEnergieZaklad = 2;
 const int kPrisunEnergieKill = 3;
-const int kPrisunEnergieDead = 0.1;
+const double kPrisunEnergieDead = 0.5;
 
 //                                              ZAJAC,ZOMBIE,KORYTNACKA,JEDNOROZEC
 const int kUtocnikHp[UTOCNIK_POCET_TYPOV] =   {    50,  90,     110,        70 };
@@ -76,7 +75,7 @@ Stav zaciatokHry(const Mapa& mapa, int hracov) {
     // netreba nahodnu, iba vymenime i a 0
     h.mapovanie.resize(mapa.pocetHracov);
     for (int j = 0; j < mapa.pocetHracov; j++) h.mapovanie[j] = j;
-    //random_shuffle(h.mapovanie.begin() + 1, h.mapovanie.end());
+    random_shuffle(h.mapovanie.begin() + 1, h.mapovanie.end());
     swap(h.mapovanie[0], h.mapovanie[i]);
   }
   return stav;
@@ -280,7 +279,7 @@ void odsimulujPrehru(const Mapa& mapa, Stav& stav, const vector<int>& dist, int 
     for (int i = 0; i < mapa.pocetHracov; i++) {
       if (i != hrac && hlasy[i] && hlasy[i] > best/2) {
         OBSERVE("odsimulujPrehru", hrac, i);
-        stav.hraci[i].body += kVyherneBodyZaklad + kVyherneBodyNasobokP/ 100;
+        stav.hraci[i].body += kVyherneBodyZaklad;
       }
     }
     h.umrel = true;
@@ -434,9 +433,23 @@ vector<int> ktoriZiju(const Mapa& mapa, const Stav& stav) {
   return result;
 }
 
+int pocetUtocnikov(const Stav& stav){
+    int ans=0;
+    FOREACH(ph, stav.hraci) {
+        ans+=ph->utocnici.size();
+    }
+    return ans;
+}
+
 
 bool hraSkoncila(const Mapa& mapa, const Stav& stav) {
-  return ktoriZiju(mapa, stav).size() <= 1;
+  return (ktoriZiju(mapa, stav).size() <= 1 && pocetUtocnikov(stav)<1);
+}
+
+void doratajBody(Stav& stav){
+    FOREACH(ph, stav.hraci) {
+        if(!ph->umrel) {ph->body+=kVydrzoveBody*(2000-stav.cas);}
+    }
 }
 
 

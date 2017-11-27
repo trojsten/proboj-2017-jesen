@@ -16,7 +16,6 @@ using namespace std;
 
 extern const int kVyhernaVzdialenost ;
 extern const int kVyherneBodyZaklad ;
-extern const int kVyherneBodyNasobokP ;
 extern const int kVydrzoveBody ;
 
 extern const int kVezaDamageRandom ;
@@ -24,7 +23,7 @@ extern const int kVezaDamageRandom ;
 extern const int kUvodnaEnergia ;
 extern const int kPrisunEnergieZaklad ;
 extern const int kPrisunEnergieKill ;
-extern const int kPrisunEnergieDead ;
+extern const double kPrisunEnergieDead ;
 
 extern const int kUtocnikHp[UTOCNIK_POCET_TYPOV];
 extern const int kUtocnikRychlost[UTOCNIK_POCET_TYPOV]; 
@@ -56,6 +55,8 @@ void odmaskujOdpoved(const Mapa& mapa, const Stav& stav, int hrac, Odpoved& odpo
 vector<int> ktoriZiju(const Mapa& mapa, const Stav& stav);
 bool hraSkoncila(const Mapa& mapa, const Stav& stav);
 vector<int> zistiRank(const Stav& stav);
+void doratajBody(Stav& stav);
+
 
 
 

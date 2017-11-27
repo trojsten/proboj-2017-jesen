@@ -141,6 +141,9 @@ int main(int argc, char *argv[]) {
     uloz(logstream, stav);
     logstream << flush;
     observationstream << flush;
+    if(hraSkoncila(mapa, stav)){
+        doratajBody(stav);
+    }
   }
 
   logstream.close();

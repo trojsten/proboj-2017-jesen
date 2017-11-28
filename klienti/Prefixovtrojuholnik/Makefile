@@ -1,7 +1,6 @@
 
 SERVERDIR = ../../server
-CXXFLAGS = -O2 -MMD -MP -Wall -I$(SERVERDIR)
-
+CXXFLAGS = -O2 -MMD -MP -std=gnu++11 -Wall -I$(SERVERDIR)
 CLEAN = *.d *.o hrac klient.tar.gz
 
 all: hrac klient.tar.gz
